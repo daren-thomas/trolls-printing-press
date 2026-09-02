@@ -15,8 +15,9 @@
   fill: black,
 )
 #set par(justify: true, leading: 0.16em)
-#set list(marker: ([•], [•]), indent: 0em, body-indent: 0.28em, spacing: 0.36em)
+#set list(marker: ([•], [–]), indent: 0em, body-indent: 0.28em, spacing: 0.18em)
 #set enum(indent: 0em, body-indent: 0.34em, spacing: 0.36em)
+#show list.item: it => block(spacing: 0.18em, it)
 #set table(
   inset: (x: 3pt, y: 2pt),
   stroke: (x: none, y: 0.45pt + black),

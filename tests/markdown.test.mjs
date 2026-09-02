@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 import test from "node:test";
 import { paragraphSeparator, parseTaskText, prepareMarkdown } from "../src/markdown.js";
 
@@ -21,4 +22,10 @@ test("publishing turns task markers into printable checkboxes", () => {
 test("tight-list paragraphs do not create a paragraph gap before nested lists", () => {
   assert.equal(paragraphSeparator(true), "\n");
   assert.equal(paragraphSeparator(false), "\n\n");
+});
+
+test("session-note nested lists are compact and visually subordinate", async () => {
+  const template = await readFile(new URL("../src/templates/session-note.typ", import.meta.url), "utf8");
+  assert.match(template, /marker: \(\[•\], \[–\]\)/);
+  assert.match(template, /#show list\.item: it => block\(spacing: 0\.18em, it\)/);
 });
