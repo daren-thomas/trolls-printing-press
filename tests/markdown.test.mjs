@@ -37,3 +37,13 @@ test("session notes use the bundled Alegreya type system", async () => {
   assert.match(template, /#set par\(justify: true, leading: 0\.58em\)/);
   assert.match(template, /font: "Alegreya Sans"/);
 });
+
+test("session-note page furniture preserves the two-column reading area", async () => {
+  const template = await readFile(new URL("../src/templates/session-note.typ", import.meta.url), "utf8");
+  assert.match(template, /margin: 8mm/);
+  assert.match(template, /#set list\([^\n]*indent: 0em/);
+  assert.match(template, /#set enum\(indent: 0em/);
+  assert.match(template, /size: 18pt[^\n]*\[\$title\$\]/);
+  assert.match(template, /spacing: 1\.5mm/);
+  assert.match(template, /#columns\(2, gutter: 6mm\)/);
+});

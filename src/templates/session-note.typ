@@ -4,7 +4,7 @@
 #set document(title: [$title$])
 #set page(
   paper: "a4",
-  margin: (top: 7mm, bottom: 6mm, inside: 8mm, outside: 7mm),
+  margin: 8mm,
   numbering: none,
   fill: white,
 )
@@ -16,8 +16,8 @@
   fill: black,
 )
 #set par(justify: true, leading: 0.58em)
-#set list(marker: ([•], [–]), indent: 1.15em, body-indent: 0.55em, spacing: 0.32em)
-#set enum(indent: 1.25em, body-indent: 0.55em, spacing: 0.32em)
+#set list(marker: ([•], [–]), indent: 0em, body-indent: 0.55em, spacing: 0.32em)
+#set enum(indent: 0em, body-indent: 0.55em, spacing: 0.32em)
 #show list.item: it => block(spacing: 0.32em, it)
 #set table(
   inset: (x: 3pt, y: 2pt),
@@ -84,8 +84,13 @@
 }
 #show image: it => block(breakable: false, it)
 
-#block(width: 100%, below: 2pt, breakable: false)[
-  #text(font: "Alegreya Sans", size: 11pt, weight: "bold")[$title$]
+#block(width: 100%, below: 3mm, breakable: false)[
+  #stack(
+    dir: ttb,
+    spacing: 1.5mm,
+    text(font: "Alegreya Sans", size: 18pt, weight: "bold", tracking: 0.01em)[$title$],
+    line(length: 100%, stroke: 1.8pt + ink),
+  )
 ]
 
-#columns(2, gutter: 5mm)[$body$]
+#columns(2, gutter: 6mm)[$body$]
