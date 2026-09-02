@@ -43,9 +43,10 @@ export default class TrollsPrintingPress extends Plugin {
       else if (kind === "booklet") result = await publishBooklet(input);
       else if (kind === "cards") result = await publishIndexCards(input);
       else result = await publishSession(input);
-      const outputPath = await this.writeOutput(activeFile, result);
+      const outputFile = await this.writeOutput(activeFile, result);
+      await this.app.workspace.getLeaf("tab").openFile(outputFile);
       progress.hide();
-      new Notice(`Published ${outputPath}`, 8000);
+      new Notice(`Published ${outputFile.path}`, 8000);
     } catch (error) {
       progress.hide();
       const message = error instanceof Error ? error.message : String(error);
@@ -67,7 +68,7 @@ export default class TrollsPrintingPress extends Plugin {
     };
   }
 
-  private async writeOutput(source: TFile, result: PublishedDocument): Promise<string> {
+  private async writeOutput(source: TFile, result: PublishedDocument): Promise<TFile> {
     const sourceFolder = path.dirname(source.path);
     const outputFolder = normalizePath(path.join(sourceFolder, this.settings.outputFolder));
     if (outputFolder.startsWith("../") || outputFolder === "..") {
@@ -79,8 +80,13 @@ export default class TrollsPrintingPress extends Plugin {
       result.data.byteOffset,
       result.data.byteOffset + result.data.byteLength,
     ) as ArrayBuffer;
-    await this.app.vault.adapter.writeBinary(outputPath, bytes);
-    return outputPath;
+    const existing = this.app.vault.getAbstractFileByPath(outputPath);
+    if (existing instanceof TFile) {
+      await this.app.vault.modifyBinary(existing, bytes);
+      return existing;
+    }
+    if (existing) throw new Error(`Cannot publish over a folder: ${outputPath}`);
+    return this.app.vault.createBinary(outputPath, bytes);
   }
 
   private async ensureFolder(folder: string): Promise<void> {
