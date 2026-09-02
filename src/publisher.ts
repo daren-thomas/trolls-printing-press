@@ -13,6 +13,7 @@ import sessionTemplate from "./templates/session-note.typ";
 import cardTemplate from "./templates/index-card.typ";
 import bookTemplate from "./templates/book.typ";
 import { splitIndexCards } from "./cards.js";
+import { paragraphSeparator, parseTaskText, prepareMarkdown } from "./markdown.js";
 
 export interface Resource {
   path: string;
@@ -97,7 +98,15 @@ function renderInline(children: Token[], resources: Set<string>): string {
   let output = "";
   for (const token of children) {
     switch (token.type) {
-      case "text": output += escapeTypst(token.content); break;
+      case "text": {
+        const task = parseTaskText(token.content);
+        if (!task) output += escapeTypst(token.content);
+        else {
+          const mark = task.checked ? "#align(center + horizon)[#text(size: 7pt, weight: \"bold\")[×]]" : "";
+          output += `#box(width: 0.72em, height: 0.72em, stroke: 0.7pt, inset: 0pt)[${mark}]#h(0.28em)${escapeTypst(task.text)}`;
+        }
+        break;
+      }
       case "softbreak": output += " "; break;
       case "hardbreak": output += "#linebreak()"; break;
       case "strong_open": output += "#strong["; break;
@@ -123,7 +132,7 @@ function renderInline(children: Token[], resources: Set<string>): string {
 }
 
 export function markdownToTypst(source: string): ConvertedMarkdown {
-  const cleaned = displayWikilinks(source).replace(/<!--[\s\S]*?-->/g, "");
+  const cleaned = displayWikilinks(prepareMarkdown(source));
   const tokens = markdown.parse(cleaned, {});
   const resources = new Set<string>();
   const listKinds: Array<"bullet" | "ordered"> = [];
@@ -134,7 +143,7 @@ export function markdownToTypst(source: string): ConvertedMarkdown {
     switch (token.type) {
       case "heading_open": output += `\n${"=".repeat(Number(token.tag.slice(1)))} `; break;
       case "heading_close": output += "\n\n"; break;
-      case "paragraph_close": output += "\n\n"; break;
+      case "paragraph_close": output += paragraphSeparator(token.hidden); break;
       case "inline": output += renderInline(token.children ?? [], resources); break;
       case "bullet_list_open": listKinds.push("bullet"); break;
       case "ordered_list_open": listKinds.push("ordered"); break;
