@@ -17,7 +17,7 @@ import cardTemplate from "./templates/index-card.typ";
 import bookTemplate from "./templates/book.typ";
 import { splitIndexCards } from "./cards.js";
 import { paragraphSeparator, parseTaskText, prepareMarkdown } from "./markdown.js";
-import { compactAbilityTable } from "./tables.js";
+import { compactAbilityTable, rollTableLayout } from "./tables.js";
 
 export interface Resource {
   path: string;
@@ -202,14 +202,19 @@ export function markdownToTypst(source: string, options: ConversionOptions = {})
       case "html_block": break;
       case "hr": output += "#line(length: 100%)\n\n"; break;
       case "table_open": {
+        const table = readTable(tokens, index, resources);
         if (options.compactAbilityTables) {
-          const table = readTable(tokens, index, resources);
           const compact = compactAbilityTable(table.rows);
           if (compact) {
             output += `${compact}\n\n`;
             index = table.end;
             break;
           }
+        }
+        const rollLayout = rollTableLayout(table.rows);
+        if (rollLayout) {
+          output += `#table(columns: (${rollLayout.columns.join(", ")}), align: (${rollLayout.align.join(", ")}), `;
+          break;
         }
         let columns = 0;
         for (let cursor = index; cursor < tokens.length && tokens[cursor].type !== "tr_close"; cursor += 1) {

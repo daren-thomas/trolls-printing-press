@@ -49,3 +49,16 @@ function renderAbilityGrid(abilities, metrics) {
   }
   return `#ability-grid(${cells.join(", ")})`;
 }
+
+/**
+ * @param {string[][]} rows
+ * @returns {{ columns: string[], align: string[] } | null}
+ */
+export function rollTableLayout(rows) {
+  const header = rows[0] ?? [];
+  if (header.length < 2 || !/^(?:\d+)?d\d+$/i.test(header[0].trim())) return null;
+  return {
+    columns: ["auto", ...Array(header.length - 1).fill("1fr")],
+    align: ["center", ...Array(header.length - 1).fill("left")],
+  };
+}

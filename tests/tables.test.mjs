@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { compactAbilityTable } from "../src/tables.js";
+import { compactAbilityTable, rollTableLayout } from "../src/tables.js";
 
 test("vertical ability tables pivot into the compact stat grid", () => {
   const result = compactAbilityTable([
@@ -33,4 +33,23 @@ test("horizontal modifier-only tables use a MOD row", () => {
     ["+2", "+1", "+1", "-4", "+0", "-3"],
   ]);
   assert.equal(result, "#ability-grid([], [STR], [DEX], [CON], [INT], [WIS], [CHA], [MOD], [+2], [+1], [+1], [-4], [+0], [-3])");
+});
+
+test("dice-led tables reserve only a narrow centered roll column", () => {
+  assert.deepEqual(rollTableLayout([["d4", "Memory Loss"], ["1", "Forget a skill"]]), {
+    columns: ["auto", "1fr"],
+    align: ["center", "left"],
+  });
+  assert.deepEqual(rollTableLayout([["2d6", "Result", "Notes"]]), {
+    columns: ["auto", "1fr", "1fr"],
+    align: ["center", "left", "left"],
+  });
+  assert.deepEqual(rollTableLayout([["d100", "Encounter"]]), {
+    columns: ["auto", "1fr"],
+    align: ["center", "left"],
+  });
+});
+
+test("ordinary first columns do not trigger roll-table layout", () => {
+  assert.equal(rollTableLayout([["Name", "Value"]]), null);
 });
