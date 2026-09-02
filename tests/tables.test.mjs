@@ -18,3 +18,19 @@ test("vertical ability tables pivot into the compact stat grid", () => {
 test("ordinary tables are not rewritten as ability grids", () => {
   assert.equal(compactAbilityTable([["Name", "Value"], ["AC", "12"]]), null);
 });
+
+test("horizontal score-and-modifier tables use the same ability grid", () => {
+  const result = compactAbilityTable([
+    ["STR", "DEX", "CON", "INT", "WIS", "CHA"],
+    ["1 (-5)", "12 (+1)", "8 (-1)", "1 (-5)", "10 (+0)", "2 (-4)"],
+  ]);
+  assert.equal(result, "#ability-grid([], [STR], [DEX], [CON], [INT], [WIS], [CHA], [SCORE], [1], [12], [8], [1], [10], [2], [MOD], [-5], [+1], [-1], [-5], [+0], [-4])");
+});
+
+test("horizontal modifier-only tables use a MOD row", () => {
+  const result = compactAbilityTable([
+    ["STR", "DEX", "CON", "INT", "WIS", "CHA"],
+    ["+2", "+1", "+1", "-4", "+0", "-3"],
+  ]);
+  assert.equal(result, "#ability-grid([], [STR], [DEX], [CON], [INT], [WIS], [CHA], [MOD], [+2], [+1], [+1], [-4], [+0], [-3])");
+});

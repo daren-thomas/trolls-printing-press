@@ -58,3 +58,9 @@ test("session ability grids override the generic white table header", async () =
   const template = await readFile(new URL("../src/templates/session-note.typ", import.meta.url), "utf8");
   assert.match(template, /#let ability-grid[\s\S]*?#show table\.cell\.where\(y: 0\): set text\(fill: black/);
 });
+
+test("level-three headings bind their rule to the title and clear the body", async () => {
+  const template = await readFile(new URL("../src/templates/session-note.typ", import.meta.url), "utf8");
+  assert.match(template, /heading\.where\(level: 3\):[\s\S]*?below: 1\.6mm/);
+  assert.match(template, /heading\.where\(level: 3\):[\s\S]*?spacing: 0\.5mm/);
+});

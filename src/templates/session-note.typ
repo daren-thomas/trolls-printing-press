@@ -55,12 +55,15 @@
 #show heading.where(level: 3): it => block(
   width: 100%,
   above: 0.58em,
-  below: 0.18em,
+  below: 1.6mm,
   breakable: false,
 )[
-  #text(font: "Alegreya Sans", size: 10.5pt, weight: "bold", it.body)
-  #v(-2pt)
-  #line(length: 100%, stroke: 0.6pt + ink)
+  #stack(
+    dir: ttb,
+    spacing: 0.5mm,
+    text(font: "Alegreya Sans", size: 10.5pt, weight: "bold", it.body),
+    line(length: 100%, stroke: 0.6pt + ink),
+  )
 ]
 
 #show quote: it => block(
