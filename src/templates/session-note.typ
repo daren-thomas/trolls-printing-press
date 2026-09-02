@@ -30,12 +30,15 @@
 
 #show heading.where(level: 1): it => block(
   width: 100%,
-  below: 4pt,
+  below: 2.2mm,
   breakable: false,
 )[
-  #text(font: "Alegreya Sans", size: 17pt, weight: "bold", it.body)
-  #v(-1pt)
-  #line(length: 100%, stroke: 2.2pt + ink)
+  #stack(
+    dir: ttb,
+    spacing: 0.8mm,
+    text(font: "Alegreya Sans", size: 17pt, weight: "bold", it.body),
+    line(length: 100%, stroke: 2.2pt + ink),
+  )
 ]
 
 #show heading.where(level: 2): it => block(

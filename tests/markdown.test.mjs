@@ -47,3 +47,9 @@ test("session-note page furniture preserves the two-column reading area", async 
   assert.match(template, /spacing: 1\.5mm/);
   assert.match(template, /#columns\(2, gutter: 6mm\)/);
 });
+
+test("level-one headings keep their rule close and body clear", async () => {
+  const template = await readFile(new URL("../src/templates/session-note.typ", import.meta.url), "utf8");
+  assert.match(template, /heading\.where\(level: 1\):[\s\S]*?below: 2\.2mm/);
+  assert.match(template, /heading\.where\(level: 1\):[\s\S]*?spacing: 0\.8mm/);
+});
