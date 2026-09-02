@@ -5,7 +5,8 @@
     "inlineSources": true,
     "module": "ESNext",
     "target": "ES2021",
-    "allowJs": false,
+    "allowJs": true,
+    "checkJs": true,
     "noImplicitAny": true,
     "strictNullChecks": true,
     "strictFunctionTypes": true,
@@ -20,5 +21,5 @@
     "types": ["node", "obsidian"],
     "skipLibCheck": true
   },
-  "include": ["src/**/*.ts", "src/**/*.d.ts"]
+  "include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.js"]
 }

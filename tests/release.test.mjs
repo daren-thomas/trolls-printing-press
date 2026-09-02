@@ -23,3 +23,8 @@ test("production bundle contains every publishing profile", { skip: !fs.existsSy
     assert.match(bundle, new RegExp(marker.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
   }
 });
+
+test("production bundle does not use Node worker threads", { skip: !fs.existsSync("main.js") }, () => {
+  const bundle = fs.readFileSync("main.js", "utf8");
+  assert.doesNotMatch(bundle, /node:worker_threads/);
+});

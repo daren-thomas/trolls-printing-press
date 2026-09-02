@@ -1,7 +1,6 @@
 import MarkdownIt, { type Token } from "markdown-it";
 import { PDFDocument } from "pdf-lib";
 import { createTypstCompiler, type TypstCompiler } from "typst-wasm";
-import { Worker } from "node:worker_threads";
 import core1 from "typst-wasm/engine/engine.core.wasm";
 import core2 from "typst-wasm/engine/engine.core2.wasm";
 import core3 from "typst-wasm/engine/engine.core3.wasm";
@@ -9,10 +8,11 @@ import regularFont from "@typst-wasm/fonts/LibertinusSerif-Regular.otf";
 import boldFont from "@typst-wasm/fonts/LibertinusSerif-Bold.otf";
 import italicFont from "@typst-wasm/fonts/LibertinusSerif-Italic.otf";
 import boldItalicFont from "@typst-wasm/fonts/LibertinusSerif-BoldItalic.otf";
-import workerSource from "typst-wasm/worker/worker-thread?raw";
+import workerSource from "typst-wasm/worker/web-worker?raw";
 import sessionTemplate from "./templates/session-note.typ";
 import cardTemplate from "./templates/index-card.typ";
 import bookTemplate from "./templates/book.typ";
+import { splitIndexCards } from "./cards.js";
 
 export interface Resource {
   path: string;
@@ -43,15 +43,18 @@ function asArrayBuffer(data: Uint8Array): ArrayBuffer {
 }
 
 function createInlineWorker() {
-  const encoded = Buffer.from(workerSource, "utf8").toString("base64");
-  const worker = new Worker(new URL(`data:text/javascript;base64,${encoded}`), { execArgv: [] });
+  const workerUrl = URL.createObjectURL(new Blob([workerSource], { type: "text/javascript" }));
+  const worker = new Worker(workerUrl, { type: "module" });
   return {
     listen: (onMessage: (data: unknown) => void, onError: (error: Error) => void) => {
-      worker.on("message", onMessage);
-      worker.on("error", onError);
+      worker.addEventListener("message", (event) => onMessage(event.data));
+      worker.addEventListener("error", (event) => onError(event.error ?? new Error(event.message)));
     },
     postMessage: (data: unknown) => worker.postMessage(data),
-    terminate: () => worker.terminate(),
+    terminate: () => {
+      worker.terminate();
+      URL.revokeObjectURL(workerUrl);
+    },
   };
 }
 
@@ -120,12 +123,14 @@ function renderInline(children: Token[], resources: Set<string>): string {
 }
 
 export function markdownToTypst(source: string): ConvertedMarkdown {
-  const tokens = markdown.parse(displayWikilinks(source), {});
+  const cleaned = displayWikilinks(source).replace(/<!--[\s\S]*?-->/g, "");
+  const tokens = markdown.parse(cleaned, {});
   const resources = new Set<string>();
   const listKinds: Array<"bullet" | "ordered"> = [];
   let output = "";
 
-  for (const token of tokens) {
+  for (let index = 0; index < tokens.length; index += 1) {
+    const token = tokens[index];
     switch (token.type) {
       case "heading_open": output += `\n${"=".repeat(Number(token.tag.slice(1)))} `; break;
       case "heading_close": output += "\n\n"; break;
@@ -145,10 +150,23 @@ export function markdownToTypst(source: string): ConvertedMarkdown {
       case "blockquote_close": output += "]\n\n"; break;
       case "fence": output += `#raw(block: true, lang: "${escapeString(token.info.trim())}", "${escapeString(token.content)}")\n\n`; break;
       case "code_block": output += `#raw(block: true, "${escapeString(token.content)}")\n\n`; break;
+      case "html_inline":
+        if (/^<br\s*\/?\s*>$/i.test(token.content)) output += "#linebreak()";
+        break;
+      case "html_block": break;
       case "hr": output += "#line(length: 100%)\n\n"; break;
-      case "table_open": output += "#table(columns: auto, "; break;
+      case "table_open": {
+        let columns = 0;
+        for (let cursor = index; cursor < tokens.length && tokens[cursor].type !== "tr_close"; cursor += 1) {
+          if (tokens[cursor].type === "th_open") columns += 1;
+        }
+        output += `#table(columns: (${Array(Math.max(columns, 1)).fill("1fr").join(", ")}), align: center, `;
+        break;
+      }
       case "table_close": output += ")\n\n"; break;
-      case "th_open": output += "table.header["; break;
+      case "thead_open": output += "table.header("; break;
+      case "thead_close": output += "), "; break;
+      case "th_open": output += "["; break;
       case "th_close": output += "], "; break;
       case "td_open": output += "["; break;
       case "td_close": output += "], "; break;
@@ -159,18 +177,6 @@ export function markdownToTypst(source: string): ConvertedMarkdown {
 
 export function safeFilename(name: string): string {
   return name.replace(/[<>:"/\\|?*]/g, "-");
-}
-
-export function splitIndexCards(source: string): Array<{ title: string; body: string }> {
-  const cards: Array<{ title: string; body: string }> = [];
-  const pattern = /^# (.+?)\r?\n(.*?)(?=^# |\s*$)/gms;
-  for (const match of source.matchAll(pattern)) {
-    cards.push({
-      title: match[1].trim(),
-      body: match[2].replace(/^\s*-\s*\*\*Source:\*\*.*(?:\r?\n)?/gim, "").trim(),
-    });
-  }
-  return cards;
 }
 
 async function compile(template: string, input: PublishInput, title = input.title): Promise<Uint8Array> {
