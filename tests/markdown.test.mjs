@@ -53,3 +53,8 @@ test("level-one headings keep their rule close and body clear", async () => {
   assert.match(template, /heading\.where\(level: 1\):[\s\S]*?below: 2\.2mm/);
   assert.match(template, /heading\.where\(level: 1\):[\s\S]*?spacing: 0\.8mm/);
 });
+
+test("session ability grids override the generic white table header", async () => {
+  const template = await readFile(new URL("../src/templates/session-note.typ", import.meta.url), "utf8");
+  assert.match(template, /#let ability-grid[\s\S]*?#show table\.cell\.where\(y: 0\): set text\(fill: black/);
+});

@@ -17,6 +17,7 @@ import cardTemplate from "./templates/index-card.typ";
 import bookTemplate from "./templates/book.typ";
 import { splitIndexCards } from "./cards.js";
 import { paragraphSeparator, parseTaskText, prepareMarkdown } from "./markdown.js";
+import { compactAbilityTable } from "./tables.js";
 
 export interface Resource {
   path: string;
@@ -37,6 +38,10 @@ export interface PublishedDocument {
 interface ConvertedMarkdown {
   body: string;
   resourceLinks: Set<string>;
+}
+
+interface ConversionOptions {
+  compactAbilityTables?: boolean;
 }
 
 const markdown = new MarkdownIt({ html: false, linkify: false, typographer: true });
@@ -142,7 +147,28 @@ function renderInline(children: Token[], resources: Set<string>): string {
   return output;
 }
 
-export function markdownToTypst(source: string): ConvertedMarkdown {
+function readTable(tokens: Token[], start: number, resources: Set<string>): { end: number; rows: string[][] } {
+  const rows: string[][] = [];
+  let row: string[] | null = null;
+  let cell: string | null = null;
+  let cursor = start + 1;
+  for (; cursor < tokens.length && tokens[cursor].type !== "table_close"; cursor += 1) {
+    const token = tokens[cursor];
+    if (token.type === "tr_open") row = [];
+    else if (token.type === "th_open" || token.type === "td_open") cell = "";
+    else if (token.type === "inline" && cell !== null) cell += renderInline(token.children ?? [], resources);
+    else if (token.type === "th_close" || token.type === "td_close") {
+      if (row !== null && cell !== null) row.push(cell);
+      cell = null;
+    } else if (token.type === "tr_close" && row !== null) {
+      rows.push(row);
+      row = null;
+    }
+  }
+  return { end: cursor, rows };
+}
+
+export function markdownToTypst(source: string, options: ConversionOptions = {}): ConvertedMarkdown {
   const cleaned = displayWikilinks(prepareMarkdown(source));
   const tokens = markdown.parse(cleaned, {});
   const resources = new Set<string>();
@@ -176,6 +202,15 @@ export function markdownToTypst(source: string): ConvertedMarkdown {
       case "html_block": break;
       case "hr": output += "#line(length: 100%)\n\n"; break;
       case "table_open": {
+        if (options.compactAbilityTables) {
+          const table = readTable(tokens, index, resources);
+          const compact = compactAbilityTable(table.rows);
+          if (compact) {
+            output += `${compact}\n\n`;
+            index = table.end;
+            break;
+          }
+        }
         let columns = 0;
         for (let cursor = index; cursor < tokens.length && tokens[cursor].type !== "tr_close"; cursor += 1) {
           if (tokens[cursor].type === "th_open") columns += 1;
@@ -199,8 +234,13 @@ export function safeFilename(name: string): string {
   return name.replace(/[<>:"/\\|?*]/g, "-");
 }
 
-async function compile(template: string, input: PublishInput, title = input.title): Promise<Uint8Array> {
-  const converted = markdownToTypst(input.markdown);
+async function compile(
+  template: string,
+  input: PublishInput,
+  title = input.title,
+  options: ConversionOptions = {},
+): Promise<Uint8Array> {
+  const converted = markdownToTypst(input.markdown, options);
   const compiler = await getCompiler();
   await compiler.clearFiles();
   for (const link of converted.resourceLinks) {
@@ -217,7 +257,10 @@ async function compile(template: string, input: PublishInput, title = input.titl
 }
 
 export async function publishSession(input: PublishInput): Promise<PublishedDocument> {
-  return { filename: `${safeFilename(input.title)}.pdf`, data: await compile(sessionTemplate, input) };
+  return {
+    filename: `${safeFilename(input.title)}.pdf`,
+    data: await compile(sessionTemplate, input, input.title, { compactAbilityTables: true }),
+  };
 }
 
 export async function publishBook(input: PublishInput): Promise<PublishedDocument> {
@@ -229,7 +272,12 @@ export async function publishIndexCards(input: PublishInput): Promise<PublishedD
   if (cards.length === 0) throw new Error("No cards found. Each card must begin with a level-one Markdown heading.");
   const combined = await PDFDocument.create();
   for (const card of cards) {
-    const bytes = await compile(cardTemplate, { ...input, title: card.title, markdown: card.body }, card.title);
+    const bytes = await compile(
+      cardTemplate,
+      { ...input, title: card.title, markdown: card.body },
+      card.title,
+      { compactAbilityTables: true },
+    );
     const cardPdf = await PDFDocument.load(bytes);
     const pages = await combined.copyPages(cardPdf, cardPdf.getPageIndices());
     for (const page of pages) combined.addPage(page);

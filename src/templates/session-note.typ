@@ -87,6 +87,26 @@
 }
 #show image: it => block(breakable: false, it)
 
+#let ability-grid(..cells) = block(
+  width: 100%,
+  above: 0.35em,
+  below: 0.5em,
+  inset: (top: 0.2em, bottom: 0.2em),
+  stroke: (top: 0.7pt + ink, bottom: 0.7pt + ink),
+  breakable: false,
+)[
+  #show table.cell.where(y: 0): set text(fill: black, weight: "bold")
+  #table(
+    columns: (auto, 1fr, 1fr, 1fr, 1fr, 1fr, 1fr),
+    align: (left, center, center, center, center, center, center),
+    inset: (x: 0.5pt, y: 1.4pt),
+    stroke: none,
+    fill: (x, y) => if y == 0 { luma(88%) } else if x == 0 { luma(94%) } else { none },
+    table.header(..cells.pos().slice(0, 7)),
+    ..cells.pos().slice(7),
+  )
+]
+
 #block(width: 100%, below: 3mm, breakable: false)[
   #stack(
     dir: ttb,
