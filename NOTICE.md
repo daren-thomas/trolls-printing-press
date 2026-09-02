@@ -7,6 +7,9 @@ Trolls' Printing Press bundles the following components:
 - Libertinus Serif fonts, SIL Open Font License 1.1. Copyright © 2012–2024
   The Libertinus Project Authors. “Linux Libertine”, “Biolinum”, and “STIX
   Fonts” are Reserved Font Names.
+- Alegreya and Alegreya Sans fonts, SIL Open Font License 1.1. Copyright ©
+  2011–2022 The Alegreya Project Authors. The complete license texts accompany
+  the font sources under `src/fonts`.
 - [markdown-it](https://github.com/markdown-it/markdown-it), MIT License.
 - [pdf-lib](https://github.com/Hopding/pdf-lib), MIT License.
 

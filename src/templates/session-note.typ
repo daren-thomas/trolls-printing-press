@@ -9,15 +9,16 @@
   fill: white,
 )
 #set text(
-  lang: "en",
-  font: "Libertinus Serif",
-  size: 10pt,
+  lang: "de",
+  region: "CH",
+  font: "Alegreya",
+  size: 9.2pt,
   fill: black,
 )
-#set par(justify: true, leading: 0.16em)
-#set list(marker: ([•], [–]), indent: 0em, body-indent: 0.28em, spacing: 0.18em)
-#set enum(indent: 0em, body-indent: 0.34em, spacing: 0.36em)
-#show list.item: it => block(spacing: 0.18em, it)
+#set par(justify: true, leading: 0.58em)
+#set list(marker: ([•], [–]), indent: 1.15em, body-indent: 0.55em, spacing: 0.32em)
+#set enum(indent: 1.25em, body-indent: 0.55em, spacing: 0.32em)
+#show list.item: it => block(spacing: 0.32em, it)
 #set table(
   inset: (x: 3pt, y: 2pt),
   stroke: (x: none, y: 0.45pt + black),
@@ -32,7 +33,7 @@
   below: 4pt,
   breakable: false,
 )[
-  #text(size: 17pt, weight: "bold", it.body)
+  #text(font: "Alegreya Sans", size: 17pt, weight: "bold", it.body)
   #v(-1pt)
   #line(length: 100%, stroke: 2.2pt + ink)
 ]
@@ -45,7 +46,7 @@
   below: 0.22em,
   breakable: false,
 )[
-  #text(size: 11pt, weight: "bold", fill: white, it.body)
+  #text(font: "Alegreya Sans", size: 11pt, weight: "bold", fill: white, it.body)
 ]
 
 #show heading.where(level: 3): it => block(
@@ -54,7 +55,7 @@
   below: 0.18em,
   breakable: false,
 )[
-  #text(size: 10.5pt, weight: "bold", it.body)
+  #text(font: "Alegreya Sans", size: 10.5pt, weight: "bold", it.body)
   #v(-2pt)
   #line(length: 100%, stroke: 0.6pt + ink)
 ]
@@ -84,7 +85,7 @@
 #show image: it => block(breakable: false, it)
 
 #block(width: 100%, below: 2pt, breakable: false)[
-  #text(size: 11pt, weight: "bold")[$title$]
+  #text(font: "Alegreya Sans", size: 11pt, weight: "bold")[$title$]
 ]
 
 #columns(2, gutter: 5mm)[$body$]

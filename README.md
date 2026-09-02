@@ -25,6 +25,7 @@ folder by default. The destination is configurable in the plugin settings.
 The printing press supplies its own layouts, fonts, Markdown conversion rules,
 and PDF tooling. Templates and typography are not configurable. This keeps the
 output predictable and lets every profile be designed and tested as a whole.
+Session notes use Alegreya for body copy and Alegreya Sans for headings.
 
 No external programs are required. Typst, the fonts, PDF merging, and booklet
 imposition are bundled with the plugin and run locally. Publishing does not

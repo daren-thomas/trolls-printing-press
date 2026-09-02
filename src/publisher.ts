@@ -8,6 +8,9 @@ import regularFont from "@typst-wasm/fonts/LibertinusSerif-Regular.otf";
 import boldFont from "@typst-wasm/fonts/LibertinusSerif-Bold.otf";
 import italicFont from "@typst-wasm/fonts/LibertinusSerif-Italic.otf";
 import boldItalicFont from "@typst-wasm/fonts/LibertinusSerif-BoldItalic.otf";
+import alegreyaFont from "./fonts/alegreya/Alegreya.ttf";
+import alegreyaItalicFont from "./fonts/alegreya/Alegreya-Italic.ttf";
+import alegreyaSansBoldFont from "./fonts/alegreya-sans/AlegreyaSans-Bold.ttf";
 import workerSource from "typst-wasm/worker/web-worker?raw";
 import sessionTemplate from "./templates/session-note.typ";
 import cardTemplate from "./templates/index-card.typ";
@@ -72,7 +75,15 @@ async function getCompiler(): Promise<TypstCompiler> {
           "engine.core3.wasm": WebAssembly.compile(asArrayBuffer(core3)),
         },
       });
-      await compiler.addFonts(regularFont, boldFont, italicFont, boldItalicFont);
+      await compiler.addFonts(
+        regularFont,
+        boldFont,
+        italicFont,
+        boldItalicFont,
+        alegreyaFont,
+        alegreyaItalicFont,
+        alegreyaSansBoldFont,
+      );
       return compiler;
     })();
   }

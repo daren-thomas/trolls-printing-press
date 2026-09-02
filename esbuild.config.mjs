@@ -16,7 +16,7 @@ const context = await esbuild.context({
   sourcemap: production ? false : "inline",
   treeShaking: true,
   outfile: "main.js",
-  loader: { ".typ": "text", ".wasm": "binary", ".otf": "binary" },
+  loader: { ".typ": "text", ".wasm": "binary", ".otf": "binary", ".ttf": "binary" },
   plugins: [{
     name: "raw-package-import",
     setup(build) {

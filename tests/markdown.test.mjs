@@ -27,5 +27,13 @@ test("tight-list paragraphs do not create a paragraph gap before nested lists", 
 test("session-note nested lists are compact and visually subordinate", async () => {
   const template = await readFile(new URL("../src/templates/session-note.typ", import.meta.url), "utf8");
   assert.match(template, /marker: \(\[•\], \[–\]\)/);
-  assert.match(template, /#show list\.item: it => block\(spacing: 0\.18em, it\)/);
+  assert.match(template, /#show list\.item: it => block\(spacing: 0\.32em, it\)/);
+});
+
+test("session notes use the bundled Alegreya type system", async () => {
+  const template = await readFile(new URL("../src/templates/session-note.typ", import.meta.url), "utf8");
+  assert.match(template, /lang: "de",\s+region: "CH"/);
+  assert.match(template, /font: "Alegreya",\s+size: 9\.2pt/);
+  assert.match(template, /#set par\(justify: true, leading: 0\.58em\)/);
+  assert.match(template, /font: "Alegreya Sans"/);
 });
