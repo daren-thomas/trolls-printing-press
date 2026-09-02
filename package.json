@@ -1,0 +1,35 @@
+{
+  "name": "trolls-printing-press",
+  "version": "0.1.0",
+  "description": "An Obsidian plugin for publishing Markdown as print-ready PDFs.",
+  "main": "main.js",
+  "scripts": {
+    "dev": "node esbuild.config.mjs",
+    "build": "tsc --noEmit && node esbuild.config.mjs production",
+    "test": "node --test tests/release.test.mjs tests/typst-smoke.test.mjs",
+    "version": "node version-bump.mjs && git add manifest.json versions.json"
+  },
+  "keywords": [
+    "obsidian",
+    "obsidian-plugin",
+    "markdown",
+    "typst",
+    "pdf"
+  ],
+  "author": "Daren Thomas",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "latest",
+    "builtin-modules": "latest",
+    "esbuild": "latest",
+    "obsidian": "latest",
+    "tslib": "latest",
+    "typescript": "latest"
+  },
+  "dependencies": {
+    "@typst-wasm/fonts": "^1.0.0",
+    "markdown-it": "^15.0.1",
+    "pdf-lib": "^1.17.1",
+    "typst-wasm": "^1.0.0"
+  }
+}

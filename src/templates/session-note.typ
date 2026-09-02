@@ -1,0 +1,89 @@
+// Pandoc template for compact, two-column session notes.
+// Markdown owns the content; this file owns the print design.
+
+#set document(title: [$title$])
+#set page(
+  paper: "a4",
+  margin: (top: 7mm, bottom: 6mm, inside: 8mm, outside: 7mm),
+  numbering: none,
+  fill: white,
+)
+#set text(
+  lang: "en",
+  font: "Libertinus Serif",
+  size: 10pt,
+  fill: black,
+)
+#set par(justify: true, leading: 0.16em)
+#set list(marker: ([•], [•]), indent: 0em, body-indent: 0.28em, spacing: 0.36em)
+#set enum(indent: 0em, body-indent: 0.34em, spacing: 0.36em)
+#set table(
+  inset: (x: 3pt, y: 2pt),
+  stroke: (x: none, y: 0.45pt + black),
+  fill: (_, row) => if row == 0 { black } else if calc.even(row) { luma(94%) },
+)
+
+#let ink = black
+#let pale = luma(93%)
+
+#show heading.where(level: 1): it => block(
+  width: 100%,
+  below: 4pt,
+  breakable: false,
+)[
+  #text(size: 17pt, weight: "bold", it.body)
+  #v(-1pt)
+  #line(length: 100%, stroke: 2.2pt + ink)
+]
+
+#show heading.where(level: 2): it => block(
+  width: 100%,
+  fill: ink,
+  inset: (x: 5pt, y: 3pt),
+  above: 0.55em,
+  below: 0.22em,
+  breakable: false,
+)[
+  #text(size: 11pt, weight: "bold", fill: white, it.body)
+]
+
+#show heading.where(level: 3): it => block(
+  width: 100%,
+  above: 0.58em,
+  below: 0.18em,
+  breakable: false,
+)[
+  #text(size: 10.5pt, weight: "bold", it.body)
+  #v(-2pt)
+  #line(length: 100%, stroke: 0.6pt + ink)
+]
+
+#show quote: it => block(
+  width: 100%,
+  inset: (x: 6pt, y: 4pt),
+  fill: pale,
+  stroke: (left: 1.8pt + ink),
+  above: 0.4em,
+  below: 0.4em,
+  it.body,
+)
+
+#show strong: it => text(weight: "bold", it.body)
+#show link: it => it.body
+#show list: it => {
+  // This scoped rule affects lists nested inside the current list only.
+  show list: set text(size: 9pt)
+  it
+}
+#show table.cell.where(y: 0): set text(fill: white, weight: "bold")
+#show figure.where(kind: table): it => {
+  set text(size: 9pt)
+  it.body
+}
+#show image: it => block(breakable: false, it)
+
+#block(width: 100%, below: 2pt, breakable: false)[
+  #text(size: 11pt, weight: "bold")[$title$]
+]
+
+#columns(2, gutter: 5mm)[$body$]
