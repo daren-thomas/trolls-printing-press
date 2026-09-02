@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
-import { paragraphSeparator, parseTaskText, prepareMarkdown } from "../src/markdown.js";
+import { paragraphSeparator, parseTaskText, prepareMarkdown, resolveDocumentLanguage } from "../src/markdown.js";
 
 test("publishing removes YAML front matter", () => {
   const markdown = prepareMarkdown(`---
@@ -11,6 +11,13 @@ type: session
 ## Strong Start
 `);
   assert.equal(markdown, "## Strong Start\n");
+});
+
+test("publishing defaults to English and accepts a frontmatter language opt-in", () => {
+  assert.deepEqual(resolveDocumentLanguage("# Goblin"), { language: "en", region: "US" });
+  assert.deepEqual(resolveDocumentLanguage("---\nlanguage: de\n---\n# Goblin"), { language: "de", region: "CH" });
+  assert.deepEqual(resolveDocumentLanguage("---\nlang: de-DE\n---\n# Goblin"), { language: "de", region: "DE" });
+  assert.deepEqual(resolveDocumentLanguage("---\nlanguage: German\n---\n# Goblin"), { language: "de", region: "CH" });
 });
 
 test("publishing turns task markers into printable checkboxes", () => {
@@ -32,10 +39,26 @@ test("session-note nested lists are compact and visually subordinate", async () 
 
 test("session notes use the bundled Alegreya type system", async () => {
   const template = await readFile(new URL("../src/templates/session-note.typ", import.meta.url), "utf8");
-  assert.match(template, /lang: "de",\s+region: "CH"/);
+  assert.match(template, /lang: "\$language\$",\s+region: "\$region\$"/);
   assert.match(template, /font: "Alegreya",\s+size: 9\.2pt/);
   assert.match(template, /#set par\(justify: true, leading: 0\.58em\)/);
   assert.match(template, /font: "Alegreya Sans"/);
+});
+
+test("all publishing templates receive document language placeholders", async () => {
+  for (const name of ["session-note.typ", "index-card.typ", "book.typ"]) {
+    const template = await readFile(new URL(`../src/templates/${name}`, import.meta.url), "utf8");
+    assert.match(template, /lang: "\$language\$"/);
+    assert.match(template, /region: "\$region\$"/);
+  }
+});
+
+test("index cards use the article type hierarchy at card scale", async () => {
+  const template = await readFile(new URL("../src/templates/index-card.typ", import.meta.url), "utf8");
+  assert.match(template, /font: "Alegreya", size: 8\.5pt/);
+  assert.match(template, /font: "Alegreya Sans"/);
+  assert.match(template, /heading\.where\(level: 2\):[\s\S]*?fill: ink/);
+  assert.match(template, /heading\.where\(level: 3\):[\s\S]*?line\(length: 100%/);
 });
 
 test("session-note page furniture preserves the two-column reading area", async () => {

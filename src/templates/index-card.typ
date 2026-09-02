@@ -26,15 +26,15 @@
         #grid(
           columns: (1fr, auto, 1fr),
           [],
-          text(size: 16pt, weight: "bold", fill: white, displayed-title),
+          text(font: "Alegreya Sans", size: 15pt, weight: "bold", fill: white, displayed-title),
           [],
         )
       ]
     ]
   },
 )
-#set text(lang: "en", font: "Libertinus Serif", size: 8.5pt, fill: black)
-#set par(justify: false, leading: 0.34em, spacing: 0.58em)
+#set text(lang: "$language$", region: "$region$", font: "Alegreya", size: 8.5pt, fill: black)
+#set par(justify: false, leading: 0.48em, spacing: 0.54em)
 #set list(marker: none, indent: 0em, body-indent: 0em, spacing: 0.24em)
 #set enum(numbering: (..numbers) => [], indent: 0em, body-indent: 0em, spacing: 0.24em)
 #set table(
@@ -48,22 +48,29 @@
 
 #show heading.where(level: 2): it => block(
   width: 100%,
-  above: 0.85em,
-  below: 0.38em,
+  fill: ink,
+  inset: (x: 4pt, y: 2pt),
+  above: 0.62em,
+  below: 0.24em,
   breakable: false,
   sticky: true,
 )[
-  #text(size: 11.5pt, weight: "bold", it.body)
+  #text(font: "Alegreya Sans", size: 10.5pt, weight: "bold", fill: white, it.body)
 ]
 
 #show heading.where(level: 3): it => block(
   width: 100%,
-  above: 0.85em,
-  below: 0.38em,
+  above: 0.56em,
+  below: 0.32em,
   breakable: false,
   sticky: true,
 )[
-  #text(size: 11.5pt, weight: "bold", it.body)
+  #stack(
+    dir: ttb,
+    spacing: 0.35mm,
+    text(font: "Alegreya Sans", size: 10pt, weight: "bold", it.body),
+    line(length: 100%, stroke: 0.55pt + ink),
+  )
 ]
 
 #show strong: it => text(weight: "bold", it.body)

@@ -9,8 +9,8 @@
   fill: white,
 )
 #set text(
-  lang: "de",
-  region: "CH",
+  lang: "$language$",
+  region: "$region$",
   font: "Alegreya",
   size: 9.2pt,
   fill: black,

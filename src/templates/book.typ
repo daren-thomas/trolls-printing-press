@@ -15,7 +15,8 @@
   fill: white,
 )
 #set text(
-  lang: "en",
+  lang: "$language$",
+  region: "$region$",
   font: "Libertinus Serif",
   size: 9.2pt,
   fill: black,

@@ -16,7 +16,7 @@ import sessionTemplate from "./templates/session-note.typ";
 import cardTemplate from "./templates/index-card.typ";
 import bookTemplate from "./templates/book.typ";
 import { splitIndexCards } from "./cards.js";
-import { paragraphSeparator, parseTaskText, prepareMarkdown } from "./markdown.js";
+import { paragraphSeparator, parseTaskText, prepareMarkdown, resolveDocumentLanguage } from "./markdown.js";
 import { compactAbilityTable, rollTableLayout } from "./tables.js";
 
 export interface Resource {
@@ -42,6 +42,11 @@ interface ConvertedMarkdown {
 
 interface ConversionOptions {
   compactAbilityTables?: boolean;
+}
+
+interface DocumentLanguage {
+  language: string;
+  region: string;
 }
 
 const markdown = new MarkdownIt({ html: false, linkify: false, typographer: true });
@@ -244,6 +249,7 @@ async function compile(
   input: PublishInput,
   title = input.title,
   options: ConversionOptions = {},
+  documentLanguage: DocumentLanguage = resolveDocumentLanguage(input.markdown),
 ): Promise<Uint8Array> {
   const converted = markdownToTypst(input.markdown, options);
   const compiler = await getCompiler();
@@ -254,6 +260,8 @@ async function compile(
   }
   const source = template
     .replaceAll("$title$", escapeTypst(title))
+    .replaceAll("$language$", escapeString(documentLanguage.language))
+    .replaceAll("$region$", escapeString(documentLanguage.region))
     .replace("$body$", converted.body);
   await compiler.addSource("main.typ", source);
   await compiler.setMain("main.typ");
@@ -276,12 +284,14 @@ export async function publishIndexCards(input: PublishInput): Promise<PublishedD
   const cards = splitIndexCards(input.markdown);
   if (cards.length === 0) throw new Error("No cards found. Each card must begin with a level-one Markdown heading.");
   const combined = await PDFDocument.create();
+  const documentLanguage = resolveDocumentLanguage(input.markdown);
   for (const card of cards) {
     const bytes = await compile(
       cardTemplate,
       { ...input, title: card.title, markdown: card.body },
       card.title,
       { compactAbilityTables: true },
+      documentLanguage,
     );
     const cardPdf = await PDFDocument.load(bytes);
     const pages = await combined.copyPages(cardPdf, cardPdf.getPageIndices());
