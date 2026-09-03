@@ -31,59 +31,47 @@ test("tight-list paragraphs do not create a paragraph gap before nested lists", 
   assert.equal(paragraphSeparator(false), "\n\n");
 });
 
-test("session-note nested lists are compact and visually subordinate", async () => {
-  const template = await readFile(new URL("../src/templates/session-note.typ", import.meta.url), "utf8");
+test("the house style owns typography, headings, lists, and stat grids", async () => {
+  const template = await readFile(new URL("../src/templates/base.typ", import.meta.url), "utf8");
+  assert.match(template, /font: "Alegreya", size: 9\.2pt/);
+  assert.match(template, /set par\(justify: true, leading: 0\.58em\)/);
   assert.match(template, /marker: \(\[•\], \[–\]\)/);
-  assert.match(template, /#show list\.item: it => block\(spacing: 0\.32em, it\)/);
-});
-
-test("session notes use the bundled Alegreya type system", async () => {
-  const template = await readFile(new URL("../src/templates/session-note.typ", import.meta.url), "utf8");
-  assert.match(template, /lang: "\$language\$",\s+region: "\$region\$"/);
-  assert.match(template, /font: "Alegreya",\s+size: 9\.2pt/);
-  assert.match(template, /#set par\(justify: true, leading: 0\.58em\)/);
-  assert.match(template, /font: "Alegreya Sans"/);
+  assert.match(template, /show list\.item: it => block\(spacing: 0\.32em, it\)/);
+  assert.match(template, /heading\.where\(level: 1\):[\s\S]*?font: "Alegreya Sans"/);
+  assert.match(template, /heading\.where\(level: 2\):[\s\S]*?fill: ink/);
+  assert.match(template, /heading\.where\(level: 3\):[\s\S]*?line\(length: 100%/);
+  assert.match(template, /#let ability-grid/);
 });
 
 test("all publishing templates receive document language placeholders", async () => {
   for (const name of ["session-note.typ", "index-card.typ", "book.typ"]) {
     const template = await readFile(new URL(`../src/templates/${name}`, import.meta.url), "utf8");
-    assert.match(template, /lang: "\$language\$"/);
-    assert.match(template, /region: "\$region\$"/);
+    assert.match(template, /#import "base\.typ": house-style/);
+    assert.match(template, /#house-style\(language: "\$language\$", region: "\$region\$"\)/);
   }
-});
-
-test("index cards use the article type hierarchy at card scale", async () => {
-  const template = await readFile(new URL("../src/templates/index-card.typ", import.meta.url), "utf8");
-  assert.match(template, /font: "Alegreya", size: 8\.5pt/);
-  assert.match(template, /font: "Alegreya Sans"/);
-  assert.match(template, /heading\.where\(level: 2\):[\s\S]*?fill: ink/);
-  assert.match(template, /heading\.where\(level: 3\):[\s\S]*?line\(length: 100%/);
 });
 
 test("session-note page furniture preserves the two-column reading area", async () => {
   const template = await readFile(new URL("../src/templates/session-note.typ", import.meta.url), "utf8");
   assert.match(template, /margin: 8mm/);
-  assert.match(template, /#set list\([^\n]*indent: 0em/);
-  assert.match(template, /#set enum\(indent: 0em/);
   assert.match(template, /size: 18pt[^\n]*\[\$title\$\]/);
   assert.match(template, /spacing: 1\.5mm/);
   assert.match(template, /#columns\(2, gutter: 6mm\)/);
 });
 
 test("level-one headings keep their rule close and body clear", async () => {
-  const template = await readFile(new URL("../src/templates/session-note.typ", import.meta.url), "utf8");
+  const template = await readFile(new URL("../src/templates/base.typ", import.meta.url), "utf8");
   assert.match(template, /heading\.where\(level: 1\):[\s\S]*?below: 2\.2mm/);
   assert.match(template, /heading\.where\(level: 1\):[\s\S]*?spacing: 0\.8mm/);
 });
 
-test("session ability grids override the generic white table header", async () => {
-  const template = await readFile(new URL("../src/templates/session-note.typ", import.meta.url), "utf8");
+test("ability grids override the generic white table header", async () => {
+  const template = await readFile(new URL("../src/templates/base.typ", import.meta.url), "utf8");
   assert.match(template, /#let ability-grid[\s\S]*?#show table\.cell\.where\(y: 0\): set text\(fill: black/);
 });
 
 test("level-three headings bind their rule to the title and clear the body", async () => {
-  const template = await readFile(new URL("../src/templates/session-note.typ", import.meta.url), "utf8");
+  const template = await readFile(new URL("../src/templates/base.typ", import.meta.url), "utf8");
   assert.match(template, /heading\.where\(level: 3\):[\s\S]*?below: 1\.6mm/);
   assert.match(template, /heading\.where\(level: 3\):[\s\S]*?spacing: 0\.5mm/);
 });

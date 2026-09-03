@@ -16,8 +16,8 @@ test("production bundle contains every publishing profile", { skip: !fs.existsSy
   const bundle = fs.readFileSync("main.js", "utf8");
   for (const marker of [
     "Publish active note as booklet",
-    "A6 landscape monster cards",
-    "Libertinus Serif",
+    "A6 landscape cards",
+    "The Trolls' Printing Press house style",
     "No cards found",
   ]) {
     assert.match(bundle, new RegExp(marker.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));

@@ -28,7 +28,6 @@
     "typescript": "latest"
   },
   "dependencies": {
-    "@typst-wasm/fonts": "^1.0.0",
     "markdown-it": "^15.0.1",
     "pdf-lib": "^1.17.1",
     "typst-wasm": "^1.0.0"

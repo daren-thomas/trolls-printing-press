@@ -4,10 +4,6 @@ import { createTypstCompiler, type TypstCompiler } from "typst-wasm";
 import core1 from "typst-wasm/engine/engine.core.wasm";
 import core2 from "typst-wasm/engine/engine.core2.wasm";
 import core3 from "typst-wasm/engine/engine.core3.wasm";
-import regularFont from "@typst-wasm/fonts/LibertinusSerif-Regular.otf";
-import boldFont from "@typst-wasm/fonts/LibertinusSerif-Bold.otf";
-import italicFont from "@typst-wasm/fonts/LibertinusSerif-Italic.otf";
-import boldItalicFont from "@typst-wasm/fonts/LibertinusSerif-BoldItalic.otf";
 import alegreyaFont from "./fonts/alegreya/Alegreya.ttf";
 import alegreyaItalicFont from "./fonts/alegreya/Alegreya-Italic.ttf";
 import alegreyaSansBoldFont from "./fonts/alegreya-sans/AlegreyaSans-Bold.ttf";
@@ -15,6 +11,7 @@ import workerSource from "typst-wasm/worker/web-worker?raw";
 import sessionTemplate from "./templates/session-note.typ";
 import cardTemplate from "./templates/index-card.typ";
 import bookTemplate from "./templates/book.typ";
+import baseTemplate from "./templates/base.typ";
 import { splitIndexCards } from "./cards.js";
 import { paragraphSeparator, parseTaskText, prepareMarkdown, resolveDocumentLanguage } from "./markdown.js";
 import { compactAbilityTable, rollTableLayout } from "./tables.js";
@@ -86,10 +83,6 @@ async function getCompiler(): Promise<TypstCompiler> {
         },
       });
       await compiler.addFonts(
-        regularFont,
-        boldFont,
-        italicFont,
-        boldItalicFont,
         alegreyaFont,
         alegreyaItalicFont,
         alegreyaSansBoldFont,
@@ -263,6 +256,7 @@ async function compile(
     .replaceAll("$language$", escapeString(documentLanguage.language))
     .replaceAll("$region$", escapeString(documentLanguage.region))
     .replace("$body$", converted.body);
+  await compiler.addSource("base.typ", baseTemplate);
   await compiler.addSource("main.typ", source);
   await compiler.setMain("main.typ");
   const result = await compiler.compile({ format: "pdf" });

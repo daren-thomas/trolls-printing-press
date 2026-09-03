@@ -1,4 +1,5 @@
-// A6 landscape monster cards. One level-one Markdown section becomes one card.
+// A6 landscape cards. One level-one Markdown section becomes one card.
+#import "base.typ": house-style, ability-grid
 
 #set page(
   width: 148mm,
@@ -12,9 +13,7 @@
     let total-pages = counter(page).final().first()
     let displayed-title = if total-pages > 1 {
       upper("$title$") + " (" + str(current-page) + "/" + str(total-pages) + ")"
-    } else {
-      upper("$title$")
-    }
+    } else { upper("$title$") }
 
     place(top + center, dy: 1.4mm)[
       #block(
@@ -33,90 +32,7 @@
     ]
   },
 )
-#set text(lang: "$language$", region: "$region$", font: "Alegreya", size: 8.5pt, fill: black)
-#set par(justify: false, leading: 0.48em, spacing: 0.54em)
-#set list(marker: none, indent: 0em, body-indent: 0em, spacing: 0.24em)
-#set enum(numbering: (..numbers) => [], indent: 0em, body-indent: 0em, spacing: 0.24em)
-#set table(
-  inset: (x: 2.4pt, y: 1.8pt),
-  stroke: none,
-  fill: (x, y) => if y == 0 { luma(88%) } else { none },
-)
 
-#let ink = black
-#let pale = luma(93%)
-
-#show heading.where(level: 2): it => block(
-  width: 100%,
-  fill: ink,
-  inset: (x: 4pt, y: 2pt),
-  above: 0.62em,
-  below: 0.24em,
-  breakable: false,
-  sticky: true,
-)[
-  #text(font: "Alegreya Sans", size: 10.5pt, weight: "bold", fill: white, it.body)
+#house-style(language: "$language$", region: "$region$")[
+  #pad(top: 0.5em, columns(2, gutter: 2em)[$body$])
 ]
-
-#show heading.where(level: 3): it => block(
-  width: 100%,
-  above: 0.56em,
-  below: 0.32em,
-  breakable: false,
-  sticky: true,
-)[
-  #stack(
-    dir: ttb,
-    spacing: 0.35mm,
-    text(font: "Alegreya Sans", size: 10pt, weight: "bold", it.body),
-    line(length: 100%, stroke: 0.55pt + ink),
-  )
-]
-
-#show strong: it => text(weight: "bold", it.body)
-#show emph: it => text(style: "italic", it.body)
-#show link: it => it.body
-#show table.cell.where(y: 0): set text(fill: ink, weight: "bold")
-#show figure.where(kind: table): it => {
-  set text(size: 8.5pt)
-  set align(left)
-  block(
-    width: 100%,
-    above: 0.68em,
-    below: 0.72em,
-    inset: (top: 0.28em, bottom: 0.28em),
-    stroke: (top: 0.8pt + ink, bottom: 0.8pt + ink),
-    breakable: false,
-    it.body,
-  )
-}
-#show quote: it => block(
-  breakable: false,
-  inset: (x: 3pt, y: 2pt),
-  fill: pale,
-  stroke: (left: 1.4pt + ink),
-  it.body,
-)
-#show image: it => block(breakable: false, it)
-#show figure.where(kind: image): it => it.body
-
-#let ability-grid(..cells) = block(
-  width: 100%,
-  above: 0.48em,
-  below: 0.58em,
-  inset: (top: 0.28em, bottom: 0.28em),
-  stroke: (top: 0.8pt + ink, bottom: 0.8pt + ink),
-  breakable: false,
-)[
-  #table(
-    columns: (auto, 1fr, 1fr, 1fr, 1fr, 1fr, 1fr),
-    align: (left, center, center, center, center, center, center),
-    inset: (x: 0.55pt, y: 1.8pt),
-    stroke: none,
-    fill: (x, y) => if y == 0 { luma(88%) } else if x == 0 { luma(94%) } else { none },
-    table.header(..cells.pos().slice(0, 7)),
-    ..cells.pos().slice(7),
-  )
-]
-
-#pad(top: 0.5em, columns(2, gutter: 2em)[$body$])
