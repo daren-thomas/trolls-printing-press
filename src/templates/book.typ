@@ -1,5 +1,5 @@
 // A5 reading PDF; booklet imposition is handled after compilation.
-#import "base.typ": house-style, ability-grid
+#import "base.typ": house-style, ability-grid, callout
 
 #set document(title: [$title$])
 #set page(

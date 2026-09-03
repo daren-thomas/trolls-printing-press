@@ -5,6 +5,48 @@ export function prepareMarkdown(source) {
     .replace(/<!--[\s\S]*?-->/g, "");
 }
 
+/** @param {string} _match @param {string} target @param {string} label */
+function aliasedHeadingLink(_match, target, label) {
+  return `[${label}](#${encodeURI(target)})`;
+}
+
+/** @param {string} _match @param {string} target */
+function headingLink(_match, target) {
+  return `[${target}](#${encodeURI(target)})`;
+}
+
+/** @param {string} _match @param {string} target */
+function embeddedResource(_match, target) {
+  return `![](${encodeURI(target)})`;
+}
+
+/** Preserve same-document wikilinks as Markdown links; cross-note links remain readable text.
+ * @param {string} value
+ */
+export function displayWikilinks(value) {
+  return value
+    .replace(/!\[\[([^\]|]+)(?:\|[^\]]+)?\]\]/g, embeddedResource)
+    .replace(/\[\[#([^\]|]+)\|([^\]]+)\]\]/g, aliasedHeadingLink)
+    .replace(/\[\[#([^\]]+)\]\]/g, headingLink)
+    .replace(/\[\[([^\]|]+)\|([^\]]+)\]\]/g, "$2")
+    .replace(/\[\[([^\]]+)\]\]/g, "$1");
+}
+
+/** Produce an ASCII-only Typst label for a Markdown heading or anchor target.
+ * @param {string} value
+ */
+export function headingLabel(value) {
+  let decoded = value;
+  try { decoded = decodeURIComponent(value); } catch { /* Keep malformed input readable and stable. */ }
+  const normalized = decoded.trim().normalize("NFC").toLowerCase();
+  let hash = 0x811c9dc5;
+  for (const character of normalized) {
+    hash ^= character.codePointAt(0) ?? 0;
+    hash = Math.imul(hash, 0x01000193);
+  }
+  return `heading-${(hash >>> 0).toString(16).padStart(8, "0")}`;
+}
+
 /**
  * Resolve Typst language settings from top-level YAML frontmatter.
  * English is deliberately the default; German opts into Swiss spelling unless

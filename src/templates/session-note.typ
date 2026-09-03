@@ -1,5 +1,5 @@
 // Compact, two-column A4 session notes.
-#import "base.typ": house-style, ability-grid, ink
+#import "base.typ": house-style, ability-grid, callout, ink
 
 #set document(title: [$title$])
 #set page(paper: "a4", margin: 8mm, numbering: none, fill: white)

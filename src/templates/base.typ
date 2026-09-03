@@ -4,6 +4,23 @@
 #let ink = black
 #let pale = luma(93%)
 
+#let callout(kind: "note", title: none, body) = block(
+  width: 100%,
+  inset: (x: 7pt, y: 5pt),
+  fill: pale,
+  stroke: (left: 2.2pt + ink),
+  above: 0.4em,
+  below: 0.4em,
+  breakable: false,
+)[
+  #set par(justify: false)
+  #if title != none {
+    text(font: "Alegreya Sans", size: 10.5pt, weight: "bold", title)
+    v(2pt)
+  }
+  #body
+]
+
 #let ability-grid(..cells) = block(
   width: 100%,
   above: 0.35em,
@@ -66,7 +83,6 @@
   )
   show strong: it => text(weight: "bold", it.body)
   show emph: it => text(style: "italic", it.body)
-  show link: it => it.body
   show table.cell.where(y: 0): set text(fill: white, weight: "bold")
   show align: it => it.body
   show figure.where(kind: table): it => { set text(size: 9pt); it.body }

@@ -13,7 +13,14 @@ import cardTemplate from "./templates/index-card.typ";
 import bookTemplate from "./templates/book.typ";
 import baseTemplate from "./templates/base.typ";
 import { splitIndexCards } from "./cards.js";
-import { paragraphSeparator, parseTaskText, prepareMarkdown, resolveDocumentLanguage } from "./markdown.js";
+import {
+  displayWikilinks,
+  headingLabel,
+  paragraphSeparator,
+  parseTaskText,
+  prepareMarkdown,
+  resolveDocumentLanguage,
+} from "./markdown.js";
 import { compactAbilityTable, rollTableLayout } from "./tables.js";
 
 export interface Resource {
@@ -46,7 +53,7 @@ interface DocumentLanguage {
   region: string;
 }
 
-const markdown = new MarkdownIt({ html: false, linkify: false, typographer: true });
+const markdown = new MarkdownIt({ html: false, linkify: true, typographer: true });
 let compilerPromise: Promise<TypstCompiler> | null = null;
 
 function asArrayBuffer(data: Uint8Array): ArrayBuffer {
@@ -101,18 +108,16 @@ function escapeString(value: string): string {
   return value.replaceAll("\\", "\\\\").replaceAll('"', '\\"').replaceAll("\n", "\\n");
 }
 
-function displayWikilinks(value: string): string {
-  return value
-    .replace(/!\[\[([^\]|]+)(?:\|[^\]]+)?\]\]/g, "![]($1)")
-    .replace(/\[\[([^\]|]+)\|([^\]]+)\]\]/g, "$2")
-    .replace(/\[\[([^\]]+)\]\]/g, "$1");
-}
-
 function renderInline(children: Token[], resources: Set<string>): string {
   let output = "";
+  let linkDepth = 0;
   for (const token of children) {
     switch (token.type) {
       case "text": {
+        if (linkDepth > 0) {
+          output += `#text("${escapeString(token.content)}")`;
+          break;
+        }
         const task = parseTaskText(token.content);
         if (!task) output += escapeTypst(token.content);
         else {
@@ -130,8 +135,15 @@ function renderInline(children: Token[], resources: Set<string>): string {
       case "s_open": output += "#strike["; break;
       case "s_close": output += "]"; break;
       case "code_inline": output += `#raw("${escapeString(token.content)}")`; break;
-      case "link_open": break;
-      case "link_close": break;
+      case "link_open": {
+        const destination = String(token.attrGet("href") ?? "");
+        output += destination.startsWith("#")
+          ? `#link(<${headingLabel(destination.slice(1))}>)[`
+          : `#link("${escapeString(destination)}")[`;
+        linkDepth += 1;
+        break;
+      }
+      case "link_close": linkDepth = Math.max(0, linkDepth - 1); output += "]"; break;
       case "image": {
         const source = String(token.attrGet("src") ?? "");
         resources.add(source);
@@ -171,13 +183,25 @@ export function markdownToTypst(source: string, options: ConversionOptions = {})
   const tokens = markdown.parse(cleaned, {});
   const resources = new Set<string>();
   const listKinds: Array<"bullet" | "ordered"> = [];
+  const emittedHeadingLabels = new Set<string>();
+  let pendingHeadingLabel: string | null = null;
   let output = "";
 
   for (let index = 0; index < tokens.length; index += 1) {
     const token = tokens[index];
     switch (token.type) {
-      case "heading_open": output += `\n${"=".repeat(Number(token.tag.slice(1)))} `; break;
-      case "heading_close": output += "\n\n"; break;
+      case "heading_open": {
+        const label = headingLabel(tokens[index + 1]?.content ?? "");
+        pendingHeadingLabel = emittedHeadingLabels.has(label) ? null : label;
+        if (pendingHeadingLabel) emittedHeadingLabels.add(pendingHeadingLabel);
+        output += `\n${"=".repeat(Number(token.tag.slice(1)))} `;
+        break;
+      }
+      case "heading_close": {
+        output += pendingHeadingLabel ? ` <${pendingHeadingLabel}>\n\n` : "\n\n";
+        pendingHeadingLabel = null;
+        break;
+      }
       case "paragraph_close": output += paragraphSeparator(token.hidden); break;
       case "inline": output += renderInline(token.children ?? [], resources); break;
       case "bullet_list_open": listKinds.push("bullet"); break;
@@ -190,7 +214,19 @@ export function markdownToTypst(source: string, options: ConversionOptions = {})
         break;
       }
       case "list_item_close": output += "\n"; break;
-      case "blockquote_open": output += "#quote(block: true)["; break;
+      case "blockquote_open": {
+        const marker = tokens[index + 2];
+        const callout = marker?.type === "inline" ? /^\[!([A-Za-z0-9_-]+)\][+-]?(?:\s+(.*))?$/.exec(marker.content) : null;
+        if (callout) {
+          const kind = callout[1].toLowerCase();
+          const title = callout[2]?.trim() || callout[1].replaceAll("-", " ");
+          output += `#callout(kind: "${escapeString(kind)}", title: [${escapeTypst(title)}])[`;
+          index += 3;
+        } else {
+          output += "#quote(block: true)[";
+        }
+        break;
+      }
       case "blockquote_close": output += "]\n\n"; break;
       case "fence": output += `#raw(block: true, lang: "${escapeString(token.info.trim())}", "${escapeString(token.content)}")\n\n`; break;
       case "code_block": output += `#raw(block: true, "${escapeString(token.content)}")\n\n`; break;
