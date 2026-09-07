@@ -1,10 +1,10 @@
 // Compact, two-column A4 session notes.
-#import "base.typ": house-style, ability-grid, callout, ink
+#import "base.typ": house-style, flow, ability-grid, callout, picture, ink
 
 #set document(title: [$title$])
 #set page(paper: "a4", margin: 8mm, numbering: none, fill: white)
 
-#house-style(language: "$language$", region: "$region$")[
+#house-style(language: "$language$", region: "$region$", columns: 2, image-limit: 120mm)[
   #block(width: 100%, below: 3mm, breakable: false)[
     #stack(
       dir: ttb,
@@ -13,5 +13,5 @@
       line(length: 100%, stroke: 1.8pt + ink),
     )
   ]
-  #columns(2, gutter: 6mm)[$body$]
+  #flow(columns: 2, gutter: 6mm)[$body$]
 ]

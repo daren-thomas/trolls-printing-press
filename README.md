@@ -14,11 +14,33 @@ small-format rulebooks.
 - **Publish active note as book** creates an A5 reading PDF.
 - **Publish active note as booklet** creates the A5 PDF and imposes it onto A4
   landscape sheets for duplex printing and saddle stitching.
+- **Publish active note as two-column book** and **… as two-column booklet**
+  flow the A5 pages in two columns at session-sheet density, for list-heavy
+  journals.
 - **Publish index cards** treats every level-one heading in the active note as
   an A6 landscape card and combines the cards into one PDF.
 
 Generated PDFs are written to `publishing/output` beneath the active note's
 folder by default. The destination is configurable in the plugin settings.
+Two-column books use `-two-column.pdf`; their booklets use
+`-two-column-booklet.pdf`, so they can coexist with the single-column versions.
+
+## Layout hints in Markdown
+
+The Markdown stays readable in Obsidian; a few conventions steer the print
+layout.
+
+- `✂️---` on a line of its own starts a new page (or a new card page).
+- Books take their printed title from a `title:` frontmatter field when present, and
+  a `subtitle:` field is set beneath it on the first page.
+- `![[map.png|wide]]` lets a picture span both columns of a two-column
+  layout. Without the hint a picture stays inside its column. Picture height
+  is capped, but pictures can still move following text onto another page.
+  A wide picture immediately before a page break may occupy a page on its own.
+- Lists of sixteen or more short entries, such as name tables, are set in
+  two or three columns automatically.
+- Index cards shrink their body type in small steps when a card overflows by a
+  few lines, so a stat block that almost fits stays on one card.
 
 ## Opinionated by design
 

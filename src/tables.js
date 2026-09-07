@@ -56,9 +56,12 @@ function renderAbilityGrid(abilities, metrics) {
  */
 export function rollTableLayout(rows) {
   const header = rows[0] ?? [];
-  if (header.length < 2 || !/^(?:\d+)?d\d+$/i.test(header[0].trim())) return null;
+  /** @param {string} cell */
+  const isDice = (cell) => /^(?:\d+)?d\d+$/i.test(cell.trim());
+  if (header.length < 2 || !isDice(header[0])) return null;
+  // Every dice column stays narrow, so side-by-side roll tables share the width evenly.
   return {
-    columns: ["auto", ...Array(header.length - 1).fill("1fr")],
-    align: ["center", ...Array(header.length - 1).fill("left")],
+    columns: header.map((cell) => (isDice(cell) ? "auto" : "1fr")),
+    align: header.map((cell) => (isDice(cell) ? "center" : "left")),
   };
 }

@@ -1,5 +1,5 @@
 // A6 landscape cards. One level-one Markdown section becomes one card.
-#import "base.typ": house-style, ability-grid, callout
+#import "base.typ": house-style, flow, ability-grid, callout, picture
 
 #set page(
   width: 148mm,
@@ -33,6 +33,7 @@
   },
 )
 
-#house-style(language: "$language$", region: "$region$")[
-  #pad(top: 0.5em, columns(2, gutter: 2em)[$body$])
+#house-style(language: "$language$", region: "$region$", size: $size$, columns: 2, image-limit: 50mm)[
+  #v(0.5em)
+  #flow(columns: 2, gutter: 2em)[$body$]
 ]

@@ -8,6 +8,7 @@ Trolls' Printing Press bundles the following components:
   2011–2022 The Alegreya Project Authors. The complete license texts accompany
   the font sources under `src/fonts`.
 - [markdown-it](https://github.com/markdown-it/markdown-it), MIT License.
+- [yaml](https://github.com/eemeli/yaml), ISC License.
 - [pdf-lib](https://github.com/Hopding/pdf-lib), MIT License.
 
 The complete corresponding license texts are distributed by the packages in

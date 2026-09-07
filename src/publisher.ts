@@ -6,6 +6,8 @@ import core2 from "typst-wasm/engine/engine.core2.wasm";
 import core3 from "typst-wasm/engine/engine.core3.wasm";
 import alegreyaFont from "./fonts/alegreya/Alegreya.ttf";
 import alegreyaItalicFont from "./fonts/alegreya/Alegreya-Italic.ttf";
+import alegreyaBoldFont from "./fonts/alegreya/Alegreya-Bold.ttf";
+import alegreyaBoldItalicFont from "./fonts/alegreya/Alegreya-BoldItalic.ttf";
 import alegreyaSansBoldFont from "./fonts/alegreya-sans/AlegreyaSans-Bold.ttf";
 import workerSource from "typst-wasm/worker/web-worker?raw";
 import sessionTemplate from "./templates/session-note.typ";
@@ -14,12 +16,17 @@ import bookTemplate from "./templates/book.typ";
 import baseTemplate from "./templates/base.typ";
 import { splitIndexCards } from "./cards.js";
 import {
+  balanceColumns,
   displayWikilinks,
+  frontmatterValue,
   headingLabel,
+  isPageBreak,
+  isShortList,
   paragraphSeparator,
   parseTaskText,
   prepareMarkdown,
   resolveDocumentLanguage,
+  spansColumns,
 } from "./markdown.js";
 import { compactAbilityTable, rollTableLayout } from "./tables.js";
 
@@ -46,7 +53,12 @@ interface ConvertedMarkdown {
 
 interface ConversionOptions {
   compactAbilityTables?: boolean;
+  /** Long lists of short items are set in this many columns; 1 leaves them alone. */
+  listColumns?: number;
 }
+
+/** Placeholder values a layout template needs beyond title and language. */
+type TemplateValues = Record<string, string>;
 
 interface DocumentLanguage {
   language: string;
@@ -54,6 +66,19 @@ interface DocumentLanguage {
 }
 
 const markdown = new MarkdownIt({ html: false, linkify: true, typographer: true });
+markdown.block.ruler.before("paragraph", "page_break", (state, startLine, _endLine, silent) => {
+  // Only document-level markers are layout instructions; code, quotes, and
+  // list contents must not introduce page breaks inside their containers.
+  if (state.level !== 0 || state.sCount[startLine] >= 4) return false;
+  const line = state.src.slice(state.bMarks[startLine] + state.tShift[startLine], state.eMarks[startLine]);
+  if (!isPageBreak(line)) return false;
+  if (silent) return true;
+  const token = state.push("page_break", "", 0);
+  token.block = true;
+  token.map = [startLine, startLine + 1];
+  state.line = startLine + 1;
+  return true;
+}, { alt: ["paragraph"] });
 let compilerPromise: Promise<TypstCompiler> | null = null;
 
 function asArrayBuffer(data: Uint8Array): ArrayBuffer {
@@ -92,6 +117,8 @@ async function getCompiler(): Promise<TypstCompiler> {
       await compiler.addFonts(
         alegreyaFont,
         alegreyaItalicFont,
+        alegreyaBoldFont,
+        alegreyaBoldItalicFont,
         alegreyaSansBoldFont,
       );
       return compiler;
@@ -147,7 +174,8 @@ function renderInline(children: Token[], resources: Set<string>): string {
       case "image": {
         const source = String(token.attrGet("src") ?? "");
         resources.add(source);
-        output += `#image("resources/${escapeString(source)}")`;
+        const wide = spansColumns(token.content ?? "");
+        output += `#picture("resources/${escapeString(source)}", wide: ${wide})`;
         break;
       }
       default:
@@ -178,6 +206,51 @@ function readTable(tokens: Token[], start: number, resources: Set<string>): { en
   return { end: cursor, rows };
 }
 
+/**
+ * Read a flat list whose items are each one short line of text. Returns null for
+ * anything richer, so nested or wordy lists keep their normal layout.
+ */
+function readShortList(tokens: Token[], start: number, resources: Set<string>): { end: number; items: string[] } | null {
+  const closeType = tokens[start].type === "ordered_list_open" ? "ordered_list_close" : "bullet_list_close";
+  const items: string[] = [];
+  let cursor = start + 1;
+  while (cursor < tokens.length && tokens[cursor].type !== closeType) {
+    const [open, paragraph, inline, paragraphClose, close] = tokens.slice(cursor, cursor + 5);
+    if (open?.type !== "list_item_open" || paragraph?.type !== "paragraph_open" || inline?.type !== "inline"
+      || paragraphClose?.type !== "paragraph_close" || close?.type !== "list_item_close") return null;
+    if (inline.content.includes("\n") || parseTaskText(inline.content)) return null;
+    items.push(inline.content);
+    cursor += 5;
+  }
+  if (!isShortList(items)) return null;
+  const rendered: string[] = [];
+  for (let position = start + 1; position < cursor; position += 5) {
+    rendered.push(renderInline(tokens[position + 2].children ?? [], resources));
+  }
+  return { end: cursor, items: rendered };
+}
+
+/** A list item whose only content is one image; returns the rendered picture and the item's close index. */
+function readLonePicture(tokens: Token[], start: number, resources: Set<string>): { end: number; typst: string } | null {
+  const [paragraph, inline, paragraphClose, close] = tokens.slice(start + 1, start + 5);
+  if (paragraph?.type !== "paragraph_open" || inline?.type !== "inline" || paragraphClose?.type !== "paragraph_close"
+    || close?.type !== "list_item_close") return null;
+  const children = (inline.children ?? []).filter((child) => !(child.type === "text" && child.content.trim() === ""));
+  if (children.length !== 1 || children[0].type !== "image") return null;
+  return { end: start + 4, typst: renderInline(children, resources) };
+}
+
+function columnarList(items: string[], kind: "bullet" | "ordered", columns: number): string {
+  const marker = kind === "ordered" ? "+" : "-";
+  let start = 1;
+  const cells = balanceColumns(items, columns).map((chunk) => {
+    const numbering = kind === "ordered" ? `#set enum(start: ${start})\n` : "";
+    start += chunk.length;
+    return `[\n${numbering}${chunk.map((item) => `${marker} ${item}`).join("\n")}\n]`;
+  });
+  return `#grid(columns: ${cells.length}, column-gutter: 1.2em, ${cells.join(", ")})`;
+}
+
 export function markdownToTypst(source: string, options: ConversionOptions = {}): ConvertedMarkdown {
   const cleaned = displayWikilinks(prepareMarkdown(source));
   const tokens = markdown.parse(cleaned, {});
@@ -202,13 +275,33 @@ export function markdownToTypst(source: string, options: ConversionOptions = {})
         pendingHeadingLabel = null;
         break;
       }
+      case "page_break": output += "#pagebreak(weak: true)\n\n"; break;
       case "paragraph_close": output += paragraphSeparator(token.hidden); break;
       case "inline": output += renderInline(token.children ?? [], resources); break;
-      case "bullet_list_open": listKinds.push("bullet"); break;
-      case "ordered_list_open": listKinds.push("ordered"); break;
+      case "bullet_list_open":
+      case "ordered_list_open": {
+        const kind = token.type === "ordered_list_open" ? "ordered" : "bullet";
+        const columns = options.listColumns ?? 1;
+        const items = listKinds.length === 0 && columns > 1 ? readShortList(tokens, index, resources) : null;
+        if (items) {
+          output += `${columnarList(items.items, kind, columns)}\n\n`;
+          index = items.end;
+          break;
+        }
+        listKinds.push(kind);
+        break;
+      }
       case "bullet_list_close":
       case "ordered_list_close": listKinds.pop(); output += "\n"; break;
       case "list_item_open": {
+        const lonePicture = listKinds.length === 1 && listKinds[0] === "bullet" ? readLonePicture(tokens, index, resources) : null;
+        if (lonePicture) {
+          // A picture that is a bullet of its own belongs to the page, not the
+          // list: it gets no marker and may span the columns.
+          output += `\n${lonePicture.typst}\n\n`;
+          index = lonePicture.end;
+          break;
+        }
         const marker = listKinds[listKinds.length - 1] === "ordered" ? "+" : "-";
         output += `${"  ".repeat(Math.max(0, listKinds.length - 1))}${marker} `;
         break;
@@ -245,6 +338,8 @@ export function markdownToTypst(source: string, options: ConversionOptions = {})
             break;
           }
         }
+        // Row count cannot predict rendered height. Let tables paginate even
+        // when only a few cells contain enough text to exceed a whole page.
         const rollLayout = rollTableLayout(table.rows);
         if (rollLayout) {
           output += `#table(columns: (${rollLayout.columns.join(", ")}), align: (${rollLayout.align.join(", ")}), `;
@@ -279,6 +374,7 @@ async function compile(
   title = input.title,
   options: ConversionOptions = {},
   documentLanguage: DocumentLanguage = resolveDocumentLanguage(input.markdown),
+  values: TemplateValues = {},
 ): Promise<Uint8Array> {
   const converted = markdownToTypst(input.markdown, options);
   const compiler = await getCompiler();
@@ -287,11 +383,12 @@ async function compile(
     const resource = await input.loadResource(link);
     if (resource) await compiler.addFile(`resources/${link}`, resource.data);
   }
-  const source = template
+  let source = template
     .replaceAll("$title$", escapeTypst(title))
     .replaceAll("$language$", escapeString(documentLanguage.language))
-    .replaceAll("$region$", escapeString(documentLanguage.region))
-    .replace("$body$", converted.body);
+    .replaceAll("$region$", escapeString(documentLanguage.region));
+  for (const [name, value] of Object.entries(values)) source = source.replaceAll(`$${name}$`, value);
+  source = source.replace("$body$", converted.body);
   await compiler.addSource("base.typ", baseTemplate);
   await compiler.addSource("main.typ", source);
   await compiler.setMain("main.typ");
@@ -302,12 +399,46 @@ async function compile(
 export async function publishSession(input: PublishInput): Promise<PublishedDocument> {
   return {
     filename: `${safeFilename(input.title)}.pdf`,
-    data: await compile(sessionTemplate, input, input.title, { compactAbilityTables: true }),
+    data: await compile(sessionTemplate, input, input.title, { compactAbilityTables: true, listColumns: 2 }),
   };
 }
 
-export async function publishBook(input: PublishInput): Promise<PublishedDocument> {
-  return { filename: `${safeFilename(input.title)}.pdf`, data: await compile(bookTemplate, input) };
+/** Two columns read at session-sheet density; a single column gets reading-size type. */
+export async function publishBook(input: PublishInput, columns = 1): Promise<PublishedDocument> {
+  const twoColumn = columns > 1;
+  // The frontmatter may name the book; the file name still names the PDF.
+  const title = frontmatterValue(input.markdown, "title") ?? input.title;
+  const subtitle = frontmatterValue(input.markdown, "subtitle") ?? "";
+  const data = await compile(
+    bookTemplate,
+    input,
+    title,
+    { listColumns: twoColumn ? 2 : 3 },
+    resolveDocumentLanguage(input.markdown),
+    { columns: String(twoColumn ? 2 : 1), size: twoColumn ? "9.2pt" : "10pt", subtitle: escapeTypst(subtitle) },
+  );
+  return { filename: `${safeFilename(input.title)}${twoColumn ? "-two-column" : ""}.pdf`, data };
+}
+
+/** Body sizes a card may shrink through so a few overflowing lines do not cost a page. */
+const CARD_SIZES = ["9.2pt", "8.8pt", "8.4pt"];
+
+async function compileCard(input: PublishInput, card: { title: string; body: string }, documentLanguage: DocumentLanguage): Promise<PDFDocument> {
+  let best: PDFDocument | null = null;
+  for (const size of CARD_SIZES) {
+    const bytes = await compile(
+      cardTemplate,
+      { ...input, title: card.title, markdown: card.body },
+      card.title,
+      { compactAbilityTables: true },
+      documentLanguage,
+      { size },
+    );
+    const candidate = await PDFDocument.load(bytes);
+    if (!best || candidate.getPageCount() < best.getPageCount()) best = candidate;
+    if (best.getPageCount() === 1) break;
+  }
+  return best as PDFDocument;
 }
 
 export async function publishIndexCards(input: PublishInput): Promise<PublishedDocument> {
@@ -316,22 +447,15 @@ export async function publishIndexCards(input: PublishInput): Promise<PublishedD
   const combined = await PDFDocument.create();
   const documentLanguage = resolveDocumentLanguage(input.markdown);
   for (const card of cards) {
-    const bytes = await compile(
-      cardTemplate,
-      { ...input, title: card.title, markdown: card.body },
-      card.title,
-      { compactAbilityTables: true },
-      documentLanguage,
-    );
-    const cardPdf = await PDFDocument.load(bytes);
+    const cardPdf = await compileCard(input, card, documentLanguage);
     const pages = await combined.copyPages(cardPdf, cardPdf.getPageIndices());
     for (const page of pages) combined.addPage(page);
   }
   return { filename: `${safeFilename(input.title)}.pdf`, data: await combined.save() };
 }
 
-export async function publishBooklet(input: PublishInput): Promise<PublishedDocument> {
-  const reading = await publishBook(input);
+export async function publishBooklet(input: PublishInput, columns = 1): Promise<PublishedDocument> {
+  const reading = await publishBook(input, columns);
   const source = await PDFDocument.load(reading.data);
   const booklet = await PDFDocument.create();
   const sourcePages = source.getPageCount();
@@ -359,5 +483,5 @@ export async function publishBooklet(input: PublishInput): Promise<PublishedDocu
     await addSpread(totalPages - (2 * sheet), 1 + (2 * sheet));
     await addSpread(2 + (2 * sheet), totalPages - 1 - (2 * sheet));
   }
-  return { filename: `${safeFilename(input.title)}-booklet.pdf`, data: await booklet.save() };
+  return { filename: `${safeFilename(input.title)}${columns > 1 ? "-two-column" : ""}-booklet.pdf`, data: await booklet.save() };
 }

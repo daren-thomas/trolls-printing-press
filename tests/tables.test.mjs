@@ -53,3 +53,10 @@ test("dice-led tables reserve only a narrow centered roll column", () => {
 test("ordinary first columns do not trigger roll-table layout", () => {
   assert.equal(rollTableLayout([["Name", "Value"]]), null);
 });
+
+test("side-by-side roll tables keep every dice column narrow", () => {
+  assert.deepEqual(rollTableLayout([["d100", "Structure", "d100", "Structure"]]), {
+    columns: ["auto", "1fr", "auto", "1fr"],
+    align: ["center", "left", "center", "left"],
+  });
+});

@@ -10,7 +10,7 @@ import {
 } from "./publisher";
 import { DEFAULT_SETTINGS, PrintingPressSettingTab, type PrintingPressSettings } from "./settings";
 
-type PublicationKind = "session" | "book" | "booklet" | "cards";
+type PublicationKind = "session" | "book" | "book-2" | "booklet" | "booklet-2" | "cards";
 
 export default class TrollsPrintingPress extends Plugin {
   settings: PrintingPressSettings = DEFAULT_SETTINGS;
@@ -20,6 +20,8 @@ export default class TrollsPrintingPress extends Plugin {
     this.addCommand({ id: "publish-active-note", name: "Publish active note", callback: () => this.publish("session") });
     this.addCommand({ id: "publish-active-note-as-book", name: "Publish active note as book", callback: () => this.publish("book") });
     this.addCommand({ id: "publish-active-note-as-booklet", name: "Publish active note as booklet", callback: () => this.publish("booklet") });
+    this.addCommand({ id: "publish-active-note-as-two-column-book", name: "Publish active note as two-column book", callback: () => this.publish("book-2") });
+    this.addCommand({ id: "publish-active-note-as-two-column-booklet", name: "Publish active note as two-column booklet", callback: () => this.publish("booklet-2") });
     this.addCommand({ id: "publish-index-cards", name: "Publish index cards", callback: () => this.publish("cards") });
     this.addRibbonIcon("printer", "Publish active note", () => this.publish("session"));
     this.addSettingTab(new PrintingPressSettingTab(this.app, this));
@@ -39,8 +41,8 @@ export default class TrollsPrintingPress extends Plugin {
     try {
       const input = await this.createInput(activeFile);
       let result: PublishedDocument;
-      if (kind === "book") result = await publishBook(input);
-      else if (kind === "booklet") result = await publishBooklet(input);
+      if (kind === "book" || kind === "book-2") result = await publishBook(input, kind === "book-2" ? 2 : 1);
+      else if (kind === "booklet" || kind === "booklet-2") result = await publishBooklet(input, kind === "booklet-2" ? 2 : 1);
       else if (kind === "cards") result = await publishIndexCards(input);
       else result = await publishSession(input);
       const outputFile = await this.writeOutput(activeFile, result);
