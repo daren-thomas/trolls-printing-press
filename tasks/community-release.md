@@ -20,7 +20,7 @@
 - Consider adding sample PDF screenshots to the README.
 - Runtime testing so far covers Windows / Obsidian 1.13.7, not macOS, Linux, or precisely 1.13.0.
 - Commit and push release preparation, and confirm GitHub CI passes.
-- Tag the chosen version (currently `0.1.0`), matching `manifest.json` exactly.
+- Tag the chosen version (`0.1.1`), matching `manifest.json` exactly.
 - Review and publish the draft GitHub release produced by the existing workflow.
 - Sign in to the Obsidian Community directory, connect GitHub, and submit the repository via New plugin.
 - Resolve directory review feedback and publish the listing.
