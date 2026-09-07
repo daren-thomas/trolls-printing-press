@@ -1,4 +1,4 @@
-import { App, PluginSettingTab, Setting } from "obsidian";
+import { App, PluginSettingTab, type SettingDefinitionItem } from "obsidian";
 import type TrollsPrintingPress from "./main";
 
 export interface PrintingPressSettings {
@@ -14,18 +14,17 @@ export class PrintingPressSettingTab extends PluginSettingTab {
     super(app, printingPress);
   }
 
-  display(): void {
-    this.containerEl.empty();
-    this.containerEl.createEl("h2", { text: "Trolls' Printing Press" });
-    new Setting(this.containerEl)
-      .setName("Output folder")
-      .setDesc("Folder relative to the active note. Layouts and fonts are supplied by the printing press.")
-      .addText((text) => text
-        .setPlaceholder(DEFAULT_SETTINGS.outputFolder)
-        .setValue(this.printingPress.settings.outputFolder)
-        .onChange(async (value) => {
-          this.printingPress.settings.outputFolder = value.trim() || DEFAULT_SETTINGS.outputFolder;
-          await this.printingPress.saveSettings();
-        }));
+  getSettingDefinitions(): SettingDefinitionItem[] {
+    return [{
+      name: "Output folder",
+      desc: "Folder relative to the active note. Layouts and fonts are supplied by the printing press.",
+      control: { type: "text", key: "outputFolder", placeholder: DEFAULT_SETTINGS.outputFolder },
+    }];
+  }
+
+  async setControlValue(key: string, value: unknown): Promise<void> {
+    if (key !== "outputFolder" || typeof value !== "string") return;
+    this.printingPress.settings.outputFolder = value.trim() || DEFAULT_SETTINGS.outputFolder;
+    await this.printingPress.saveSettings();
   }
 }

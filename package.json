@@ -5,6 +5,8 @@
   "type": "module",
   "main": "main.js",
   "scripts": {
+    "lint": "eslint . --max-warnings 0",
+    "prepare:test-vault": "node scripts/prepare-test-vault.mjs",
     "dev": "node esbuild.config.mjs",
     "build": "tsc --noEmit && node esbuild.config.mjs production",
     "test": "node --test tests/cards.test.mjs tests/markdown.test.mjs tests/converter.test.mjs tests/tables.test.mjs tests/release.test.mjs tests/typst-smoke.test.mjs",
@@ -21,8 +23,9 @@
   "license": "MIT",
   "devDependencies": {
     "@types/node": "latest",
-    "builtin-modules": "latest",
     "esbuild": "latest",
+    "eslint": "^9.39.5",
+    "eslint-plugin-obsidianmd": "^0.4.2",
     "obsidian": "latest",
     "tslib": "latest",
     "typescript": "latest"

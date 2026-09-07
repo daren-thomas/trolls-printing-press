@@ -65,12 +65,28 @@ flip on the short edge, fold the sheets down the middle, and nest them in order.
 
 ```powershell
 npm install
+npm run lint
 npm run build
 npm test
 ```
 
 For local development, clone the repository directly into an Obsidian vault's
 `.obsidian/plugins/trolls-printing-press` directory and run `npm run dev`.
+
+For a clean installation check, run `npm run prepare:test-vault` after building,
+then open the generated `test-vault` folder as a vault in Obsidian. It contains
+only the release assets and a sample note for exercising all six publishing
+commands. The test vault is ignored by Git.
+
+Enable community plugins in that vault. With Obsidian's CLI enabled, run the
+installation and lifecycle checks from PowerShell:
+
+```powershell
+obsidian vault=test-vault eval code="eval(require('fs').readFileSync(require('path').join(app.vault.adapter.getBasePath(),'../scripts/check-test-vault.js'),'utf8'))"
+```
+
+The check regenerates six PDFs, verifies settings persistence, and checks that
+disabling the plugin removes its commands and terminates its compiler worker.
 
 The production build bundles the Typst engine, fonts, and layouts into
 `main.js`, because Obsidian installs only `main.js`, `manifest.json`, and the

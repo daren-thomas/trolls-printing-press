@@ -1,6 +1,7 @@
 import { Notice, Plugin, TFile, normalizePath } from "obsidian";
 import path from "node:path/posix";
 import {
+  disposeCompiler,
   publishBook,
   publishBooklet,
   publishIndexCards,
@@ -13,10 +14,13 @@ import { DEFAULT_SETTINGS, PrintingPressSettingTab, type PrintingPressSettings }
 type PublicationKind = "session" | "book" | "book-2" | "booklet" | "booklet-2" | "cards";
 
 export default class TrollsPrintingPress extends Plugin {
-  settings: PrintingPressSettings = DEFAULT_SETTINGS;
+  settings: PrintingPressSettings = { ...DEFAULT_SETTINGS };
 
   async onload(): Promise<void> {
-    this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+    const saved: unknown = await this.loadData();
+    if (saved && typeof saved === "object" && "outputFolder" in saved && typeof saved.outputFolder === "string") {
+      this.settings.outputFolder = saved.outputFolder.trim() || DEFAULT_SETTINGS.outputFolder;
+    }
     this.addCommand({ id: "publish-active-note", name: "Publish active note", callback: () => this.publish("session") });
     this.addCommand({ id: "publish-active-note-as-book", name: "Publish active note as book", callback: () => this.publish("book") });
     this.addCommand({ id: "publish-active-note-as-booklet", name: "Publish active note as booklet", callback: () => this.publish("booklet") });
@@ -29,6 +33,10 @@ export default class TrollsPrintingPress extends Plugin {
 
   async saveSettings(): Promise<void> {
     await this.saveData(this.settings);
+  }
+
+  onunload(): void {
+    void disposeCompiler().catch((error: unknown) => console.error("Failed to dispose the printing press compiler", error));
   }
 
   private async publish(kind: PublicationKind): Promise<void> {

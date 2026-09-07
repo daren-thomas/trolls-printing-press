@@ -1,6 +1,6 @@
 import esbuild from "esbuild";
 import process from "node:process";
-import builtins from "builtin-modules";
+import { builtinModules } from "node:module";
 import fs from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 
@@ -9,7 +9,7 @@ const production = process.argv[2] === "production";
 const context = await esbuild.context({
   entryPoints: ["src/main.ts"],
   bundle: true,
-  external: ["obsidian", "electron", ...builtins],
+  external: ["obsidian", "electron", ...builtinModules, "node:*"],
   format: "cjs",
   target: "es2021",
   logLevel: "info",

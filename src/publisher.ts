@@ -91,7 +91,7 @@ function createInlineWorker() {
   return {
     listen: (onMessage: (data: unknown) => void, onError: (error: Error) => void) => {
       worker.addEventListener("message", (event) => onMessage(event.data));
-      worker.addEventListener("error", (event) => onError(event.error ?? new Error(event.message)));
+      worker.addEventListener("error", (event) => onError(event.error instanceof Error ? event.error : new Error(event.message)));
     },
     postMessage: (data: unknown) => worker.postMessage(data),
     terminate: () => {
@@ -127,8 +127,14 @@ async function getCompiler(): Promise<TypstCompiler> {
   return compilerPromise;
 }
 
+export async function disposeCompiler(): Promise<void> {
+  const pending = compilerPromise;
+  compilerPromise = null;
+  if (pending) await (await pending).dispose();
+}
+
 function escapeTypst(value: string): string {
-  return value.replace(/[\\#\[\]_*`@$<>]/g, "\\$&");
+  return value.replace(/[\\#[\]_*`@$<>]/g, "\\$&");
 }
 
 function escapeString(value: string): string {
