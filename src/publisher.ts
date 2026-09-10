@@ -1,14 +1,15 @@
 import MarkdownIt, { type Token } from "markdown-it";
 import { PDFDocument } from "pdf-lib";
+import { brotliDecompressSync } from "node:zlib";
 import { createTypstCompiler, type TypstCompiler } from "typst-wasm";
-import core1 from "typst-wasm/engine/engine.core.wasm";
-import core2 from "typst-wasm/engine/engine.core2.wasm";
-import core3 from "typst-wasm/engine/engine.core3.wasm";
-import alegreyaFont from "./fonts/alegreya/Alegreya.ttf";
-import alegreyaItalicFont from "./fonts/alegreya/Alegreya-Italic.ttf";
-import alegreyaBoldFont from "./fonts/alegreya/Alegreya-Bold.ttf";
-import alegreyaBoldItalicFont from "./fonts/alegreya/Alegreya-BoldItalic.ttf";
-import alegreyaSansBoldFont from "./fonts/alegreya-sans/AlegreyaSans-Bold.ttf";
+import core1 from "typst-wasm/engine/engine.core.wasm?brotli";
+import core2 from "typst-wasm/engine/engine.core2.wasm?brotli";
+import core3 from "typst-wasm/engine/engine.core3.wasm?brotli";
+import alegreyaFont from "./fonts/alegreya/Alegreya.ttf?brotli";
+import alegreyaItalicFont from "./fonts/alegreya/Alegreya-Italic.ttf?brotli";
+import alegreyaBoldFont from "./fonts/alegreya/Alegreya-Bold.ttf?brotli";
+import alegreyaBoldItalicFont from "./fonts/alegreya/Alegreya-BoldItalic.ttf?brotli";
+import alegreyaSansBoldFont from "./fonts/alegreya-sans/AlegreyaSans-Bold.ttf?brotli";
 import workerSource from "typst-wasm/worker/web-worker?raw";
 import sessionTemplate from "./templates/session-note.typ";
 import cardTemplate from "./templates/index-card.typ";
@@ -81,6 +82,11 @@ markdown.block.ruler.before("paragraph", "page_break", (state, startLine, _endLi
 }, { alt: ["paragraph"] });
 let compilerPromise: Promise<TypstCompiler> | null = null;
 
+/** Bundled binaries are Brotli-compressed to keep main.js small; unpack them on first use. */
+function inflate(data: Uint8Array): Uint8Array {
+  return new Uint8Array(brotliDecompressSync(data));
+}
+
 function asArrayBuffer(data: Uint8Array): ArrayBuffer {
   return data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength) as ArrayBuffer;
 }
@@ -109,17 +115,17 @@ async function getCompiler(): Promise<TypstCompiler> {
         worker: createInlineWorker,
         packageCache: false,
         coreModules: {
-          "engine.core.wasm": WebAssembly.compile(asArrayBuffer(core1)),
-          "engine.core2.wasm": WebAssembly.compile(asArrayBuffer(core2)),
-          "engine.core3.wasm": WebAssembly.compile(asArrayBuffer(core3)),
+          "engine.core.wasm": WebAssembly.compile(asArrayBuffer(inflate(core1))),
+          "engine.core2.wasm": WebAssembly.compile(asArrayBuffer(inflate(core2))),
+          "engine.core3.wasm": WebAssembly.compile(asArrayBuffer(inflate(core3))),
         },
       });
       await compiler.addFonts(
-        alegreyaFont,
-        alegreyaItalicFont,
-        alegreyaBoldFont,
-        alegreyaBoldItalicFont,
-        alegreyaSansBoldFont,
+        inflate(alegreyaFont),
+        inflate(alegreyaItalicFont),
+        inflate(alegreyaBoldFont),
+        inflate(alegreyaBoldItalicFont),
+        inflate(alegreyaSansBoldFont),
       );
       return compiler;
     })();

@@ -28,3 +28,8 @@ test("production bundle does not use Node worker threads", { skip: !fs.existsSyn
   const bundle = fs.readFileSync("main.js", "utf8");
   assert.doesNotMatch(bundle, /node:worker_threads/);
 });
+
+test("production bundle contains no build-machine paths", { skip: !fs.existsSync("main.js") }, () => {
+  const bundle = fs.readFileSync("main.js", "utf8");
+  assert.doesNotMatch(bundle, /\/home\/|[A-Z]:\\Users\\/);
+});

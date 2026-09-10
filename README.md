@@ -90,7 +90,10 @@ disabling the plugin removes its commands and terminates its compiler worker.
 
 The production build bundles the Typst engine, fonts, and layouts into
 `main.js`, because Obsidian installs only `main.js`, `manifest.json`, and the
-optional `styles.css` from a plugin release.
+optional `styles.css` from a plugin release. The engine and fonts are stored
+Brotli-compressed and unpacked with Node's `zlib` when the first document is
+published. Build with Node 22 (see `.nvmrc`): the compressor output depends on
+the Node version, and releases must be reproducible from the tagged commit.
 
 ## Installation
 

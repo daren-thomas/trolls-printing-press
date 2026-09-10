@@ -15,7 +15,7 @@ const result = await build({
   plugins: [{
     name: "unused-publishing-assets",
     setup(build) {
-      build.onResolve({ filter: /(?:\.wasm|\.ttf|\.typ|\?raw)$/ }, (args) => ({
+      build.onResolve({ filter: /(?:\.typ|\?raw|\?brotli)$/ }, (args) => ({
         path: args.path, namespace: "unused-asset",
       }));
       build.onLoad({ filter: /.*/, namespace: "unused-asset" }, () => ({ contents: "export default null" }));

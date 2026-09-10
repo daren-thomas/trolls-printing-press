@@ -8,22 +8,13 @@ declare module "*.lua" {
   export default content;
 }
 
-declare module "*.wasm" {
-  const content: Uint8Array;
-  export default content;
-}
-
-declare module "*.otf" {
-  const content: Uint8Array;
-  export default content;
-}
-
-declare module "*.ttf" {
-  const content: Uint8Array;
-  export default content;
-}
-
 declare module "*?raw" {
   const content: string;
+  export default content;
+}
+
+/** Brotli-compressed binary asset; decode with `inflate` before use. */
+declare module "*?brotli" {
+  const content: Uint8Array;
   export default content;
 }
