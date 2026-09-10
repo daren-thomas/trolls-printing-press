@@ -1,7 +1,7 @@
 {
   "id": "trolls-printing-press",
   "name": "Trolls Printing Press",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "minAppVersion": "1.13.0",
   "description": "Create print-ready session notes, reference sheets, index cards, and booklets from Markdown.",
   "author": "Daren Thomas",
