@@ -129,9 +129,9 @@ export function isShortList(items) {
  */
 export function frontmatterValue(source, key) {
   const frontmatter = /^\uFEFF?---[ \t]*\r?\n([\s\S]*?)\r?\n---[ \t]*(?:\r?\n|$)/.exec(source)?.[1] ?? "";
-  const metadata = parse(frontmatter);
+  const metadata = /** @type {unknown} */ (parse(frontmatter));
   if (!metadata || typeof metadata !== "object" || Array.isArray(metadata)) return null;
-  const value = metadata[key];
+  const value = /** @type {Record<string, unknown>} */ (metadata)[key];
   if (typeof value !== "string" && typeof value !== "number") return null;
   return String(value).trim() || null;
 }
