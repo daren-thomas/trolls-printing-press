@@ -7,6 +7,7 @@
 // Profiles declare how tall an embedded picture may grow and how many text
 // columns they flow, so pictures can fit a column or span the whole page.
 #let picture-limit = state("tpp-picture-limit", 60mm)
+#let wide-picture-limit = state("tpp-wide-picture-limit", 60mm)
 #let column-count = state("tpp-column-count", 1)
 
 #let fitted-image(path, max-height) = layout(size => {
@@ -21,7 +22,10 @@
 #let picture(path, wide: false) = context {
   let limit = picture-limit.get()
   if wide and column-count.get() > 1 {
-    place(top, float: true, scope: "parent", clearance: 0.7em, fitted-image(path, limit))
+    let wide-limit = wide-picture-limit.get()
+    place(top + center, float: true, scope: "parent", clearance: 0.7em)[
+      #block(width: 100%)[#fitted-image(path, wide-limit)]
+    ]
   } else {
     block(width: 100%, breakable: false, above: 0.6em, below: 0.6em, fitted-image(path, limit))
   }
@@ -100,9 +104,11 @@
   size: 9.2pt,
   columns: 1,
   image-limit: 60mm,
+  wide-image-limit: none,
   body,
 ) = {
   picture-limit.update(image-limit)
+  wide-picture-limit.update(if wide-image-limit == none { image-limit } else { wide-image-limit })
   column-count.update(columns)
 
   set text(lang: language, region: region, font: "Alegreya", size: size, fill: ink)

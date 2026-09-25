@@ -33,7 +33,7 @@
   },
 )
 
-#house-style(language: "$language$", region: "$region$", size: $size$, columns: 2, image-limit: 50mm)[
+#house-style(language: "$language$", region: "$region$", size: $size$, columns: 2, image-limit: 50mm, wide-image-limit: 85mm)[
   #v(0.5em)
   #flow(columns: 2, gutter: 2em)[$body$]
 ]

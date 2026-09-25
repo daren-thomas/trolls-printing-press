@@ -88,6 +88,10 @@ test("bundled Typst stack renders publishing layouts", { timeout: 120_000 }, asy
     const pdf = await render("book", "![[map.svg|wide]]\n\nPicture caption.", 2);
     assert.equal(pdf.getPageCount(), 1);
   });
+  await t.test("index cards render wide pictures on one card", async () => {
+    const pdf = await render("index-card", "![[map.svg|wide]]", 2);
+    assert.equal(pdf.getPageCount(), 1);
+  });
   for (const size of ["9.2pt", "8.8pt", "8.4pt"]) {
     await t.test(`cards compile with fitted body size ${size}`, async () => {
       const pdf = await render("index-card", "**Bold text** and ***bold italic text***.", 2, size);
