@@ -50,6 +50,27 @@ test("dice-led tables reserve only a narrow centered roll column", () => {
   });
 });
 
+test("dice-led tables keep a short label column compact", () => {
+  assert.deepEqual(rollTableLayout([
+    ["d20", "Begin with…", "Use it to…"],
+    ["1", "Approach", "bring a destination, person, or danger into view"],
+    ["12", "Investigate", "pursue the cause or meaning of something"],
+  ]), {
+    columns: ["auto", "auto", "1fr"],
+    align: ["center", "left", "left"],
+  });
+});
+
+test("dice-led tables let a wordy middle column share flexible width", () => {
+  assert.deepEqual(rollTableLayout([
+    ["d20", "Development", "Notes"],
+    ["1", "A much longer intermediate description", "Follow-up details"],
+  ]), {
+    columns: ["auto", "1fr", "1fr"],
+    align: ["center", "left", "left"],
+  });
+});
+
 test("ordinary first columns do not trigger roll-table layout", () => {
   assert.equal(rollTableLayout([["Name", "Value"]]), null);
 });

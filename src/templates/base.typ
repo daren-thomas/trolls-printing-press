@@ -117,8 +117,12 @@
   set enum(indent: 0em, body-indent: 0.55em, spacing: 0.7em)
   set table(
     inset: (x: 3pt, y: 2pt),
-    stroke: (x: none, y: 0.45pt + ink),
-    fill: (_, row) => if row == 0 { ink } else if calc.even(row) { luma(94%) },
+    stroke: (_, row) => if row == 0 {
+      (bottom: 0.45pt + ink)
+    } else {
+      (top: 0.45pt + ink)
+    },
+    fill: (_, row) => if row == 0 { none } else if calc.even(row) { luma(94%) },
   )
 
   // Items keep their tight rhythm inside a list, but a top-level list stands
@@ -142,7 +146,7 @@
     #text(font: "Alegreya Sans", size: 11pt, weight: "bold", fill: white, it.body)
   ]
   show heading.where(level: 3): it => block(
-    width: 100%, above: 0.58em, below: 1.6mm, breakable: false, sticky: true,
+    width: 100%, above: 1.1em, below: 1.6mm, breakable: false, sticky: true,
   )[
     #stack(
       dir: ttb,
@@ -160,7 +164,7 @@
   show table: set text(hyphenate: false)
   show strong: it => text(weight: "bold", it.body)
   show emph: it => text(style: "italic", it.body)
-  show table.cell.where(y: 0): set text(fill: white, weight: "bold")
+  show table.cell.where(y: 0): set text(fill: black, weight: "bold")
   show align: it => it.body
   show figure.where(kind: table): it => { set text(size: 9pt); it.body }
   show image: it => block(breakable: false, it)

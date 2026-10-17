@@ -104,6 +104,7 @@ test("the book prints its title, numbers pages on the outer edge, and can flow t
   assert.match(template, /size: \$size\$/);
   assert.match(template, /size: 22pt[^\n]*\[\$title\$\]/);
   assert.match(template, /calc\.odd\(physical-page\)/);
+  assert.match(template, /if calc\.odd\(physical-page\) \{ h\(1fr\) \}/);
   assert.match(template, /#flow\(columns: column-count, gutter: 6mm, reading\)/);
 });
 
@@ -144,13 +145,17 @@ test("level-one headings keep their rule close and body clear", async () => {
   assert.match(template, /heading\.where\(level: 1\):[\s\S]*?spacing: 0\.8mm/);
 });
 
-test("ability grids override the generic white table header", async () => {
+test("table headers use bold black type on white", async () => {
   const template = await readFile(new URL("../src/templates/base.typ", import.meta.url), "utf8");
+  assert.match(template, /fill: \(_, row\) => if row == 0 \{ none \}/);
+  assert.match(template, /stroke: \(_, row\) => if row == 0 \{\s*\(bottom: 0\.45pt \+ ink\)/);
+  assert.match(template, /show table\.cell\.where\(y: 0\): set text\(fill: black, weight: "bold"\)/);
   assert.match(template, /#let ability-grid[\s\S]*?#show table\.cell\.where\(y: 0\): set text\(fill: black/);
 });
 
 test("level-three headings bind their rule to the title and clear the body", async () => {
   const template = await readFile(new URL("../src/templates/base.typ", import.meta.url), "utf8");
+  assert.match(template, /heading\.where\(level: 3\):[\s\S]*?above: 1\.1em/);
   assert.match(template, /heading\.where\(level: 3\):[\s\S]*?below: 1\.6mm/);
   assert.match(template, /heading\.where\(level: 3\):[\s\S]*?spacing: 0\.5mm/);
 });

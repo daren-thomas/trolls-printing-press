@@ -13,8 +13,8 @@
     let physical-page = counter(page).get().first()
     if physical-page > 1 {
       // Page numbers live on the outer edge: recto pages are odd.
-      let edge = if calc.odd(physical-page) { right } else { left }
-      align(edge, text(size: 7.5pt, str(physical-page)))
+      if calc.odd(physical-page) { h(1fr) }
+      text(size: 7.5pt, str(physical-page))
     }
   },
   fill: white,

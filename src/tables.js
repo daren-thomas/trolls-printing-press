@@ -59,9 +59,18 @@ export function rollTableLayout(rows) {
   /** @param {string} cell */
   const isDice = (cell) => /^(?:\d+)?d\d+$/i.test(cell.trim());
   if (header.length < 2 || !isDice(header[0])) return null;
+  const diceColumns = header.reduce((count, cell) => count + Number(isDice(cell)), 0);
+  const hasCompactLabels = diceColumns === 1 && header.length >= 3 && rows.length > 1;
+  /** @param {number} column */
+  const isCompactLabel = (column) => hasCompactLabels
+    && column > 0
+    && column < header.length - 1
+    && rows.every((row) => (row[column] ?? "").trim().length <= 18);
   // Every dice column stays narrow, so side-by-side roll tables share the width evenly.
+  // In a single roll table, short label columns also size to their contents and
+  // leave the remaining width to the final explanatory column.
   return {
-    columns: header.map((cell) => (isDice(cell) ? "auto" : "1fr")),
+    columns: header.map((cell, column) => (isDice(cell) || isCompactLabel(column) ? "auto" : "1fr")),
     align: header.map((cell) => (isDice(cell) ? "center" : "left")),
   };
 }
